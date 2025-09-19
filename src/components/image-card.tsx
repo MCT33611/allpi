@@ -10,12 +10,14 @@ type ImageCardProps = {
   image: Omit<ImageFile, "type">;
   className?: string;
   priority?: boolean;
+  fit?: "cover" | "contain";
 };
 
 export default function ImageCard({
   image,
   className,
   priority = false,
+  fit = "cover",
 }: ImageCardProps) {
   const [isLoading, setIsLoading] = useState(true);
 
@@ -30,11 +32,12 @@ export default function ImageCard({
       <Image
         src={image.url}
         alt={image.name}
-        width={800}
-        height={600}
+        fill
         sizes="(max-width: 768px) 80vw, (max-width: 1200px) 50vw, 33vw"
         className={cn(
-          "object-cover transition-transform duration-300 ease-in-out group-hover:scale-105",
+          "transition-opacity duration-300 ease-in-out",
+          fit === "cover" && "object-cover group-hover:scale-105",
+          fit === "contain" && "object-contain",
           isLoading ? "opacity-0" : "opacity-100"
         )}
         priority={priority}

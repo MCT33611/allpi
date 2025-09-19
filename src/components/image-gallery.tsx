@@ -7,6 +7,15 @@ import { cn } from "@/lib/utils";
 import ImageCard from "./image-card";
 import FolderLane from "./folder-lane";
 import { useSearchParams } from "next/navigation";
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+  type CarouselApi,
+} from "@/components/ui/carousel";
+import { useToast } from "@/hooks/use-toast";
 
 type ScrollDirection = "vertical" | "horizontal";
 
@@ -14,38 +23,81 @@ export default function ImageGallery({ items }: { items: GalleryItem[] }) {
   const [scrollDirection, setScrollDirection] = useState<ScrollDirection>("vertical");
   const galleryRef = useRef<HTMLDivElement>(null);
   const searchParams = useSearchParams();
+  const { toast } = useToast();
+
+  const [carouselApi, setCarouselApi] = useState<CarouselApi>();
+  const [headerVisible, setHeaderVisible] = useState(true);
+  const lastScrollY = useRef(0);
+  const lastScrollX = useRef(0);
 
   const itemRefs = useRef(new Map<string, HTMLElement>());
+  const carouselItemRefs = useRef(new Map<string, number>());
+  items.forEach((item, index) => {
+    carouselItemRefs.current.set(item.id, index);
+    if(item.type === 'folder') {
+      item.images.forEach(img => {
+        carouselItemRefs.current.set(img.id, index);
+      })
+    }
+  });
 
-  // Initial scroll to last seen or specified image
+
+  // Scroll to initial image
   useEffect(() => {
-    const lastSeenId = localStorage.getItem("lastSeenImageId");
-    const startImageId = searchParams.get("imageId") || lastSeenId;
+    if (!items.length) return;
+
+    const startImageId = searchParams.get("imageId") || localStorage.getItem("lastSeenImageId");
 
     if (startImageId) {
-      let attempts = 0;
-      const maxAttempts = 100;
-      const tryScroll = () => {
-        const element = itemRefs.current.get(startImageId);
-        if (element) {
-          // 'auto' is instant, 'smooth' can be interrupted by user
-          element.scrollIntoView({
-            behavior: "auto",
-            block: "center",
-            inline: "center",
-          });
-        } else if (attempts < maxAttempts) {
-          attempts++;
-          setTimeout(tryScroll, 50); // Retry after a short delay
+        const index = carouselItemRefs.current.get(startImageId);
+        if (typeof index === 'number') {
+            if (scrollDirection === 'horizontal' && carouselApi) {
+                carouselApi.scrollTo(index, true);
+            } else {
+                 let attempts = 0;
+                const maxAttempts = 100;
+                const tryScroll = () => {
+                    const element = itemRefs.current.get(startImageId);
+                    if (element) {
+                        element.scrollIntoView({ behavior: "auto", block: "center" });
+                    } else if (attempts < maxAttempts) {
+                        attempts++;
+                        setTimeout(tryScroll, 50); // Retry after a short delay
+                    }
+                };
+                setTimeout(tryScroll, 100);
+            }
         }
-      };
-      // Delay to ensure layout is stable
-      setTimeout(tryScroll, 100);
     }
-  }, [searchParams, items]);
+  }, [searchParams, items, carouselApi, scrollDirection]);
 
-  // Intersection Observer to update last seen image
+
+  // Carousel slide change handler
   useEffect(() => {
+    if (!carouselApi) return;
+
+    const onSelect = (api: CarouselApi) => {
+      const slideIndex = api.selectedScrollSnap();
+      const currentItem = items[slideIndex];
+      if (currentItem) {
+        const imageId = currentItem.id;
+        localStorage.setItem("lastSeenImageId", imageId);
+        const newUrl = `${window.location.pathname}?imageId=${imageId}`;
+        window.history.replaceState({ ...window.history.state, as: newUrl, url: newUrl }, "", newUrl);
+      }
+    };
+
+    carouselApi.on("select", onSelect);
+    return () => {
+      carouselApi.off("select", onSelect);
+    };
+  }, [carouselApi, items]);
+
+
+  // Intersection Observer for vertical scroll
+  useEffect(() => {
+    if (scrollDirection !== 'vertical') return;
+
     const observer = new IntersectionObserver(
       (entries) => {
         const intersectingEntry = entries.find((e) => e.isIntersecting);
@@ -54,19 +106,13 @@ export default function ImageGallery({ items }: { items: GalleryItem[] }) {
           if (imageId) {
             localStorage.setItem("lastSeenImageId", imageId);
             const newUrl = `${window.location.pathname}?imageId=${imageId}`;
-            window.history.replaceState(
-              { ...window.history.state, as: newUrl, url: newUrl },
-              "",
-              newUrl
-            );
+            window.history.replaceState({ ...window.history.state, as: newUrl, url: newUrl }, "", newUrl);
           }
         }
       },
       {
         root: galleryRef.current,
-        // This margin creates a horizontal or vertical line in the middle of the viewport.
-        // The element crossing this line is considered 'intersecting'.
-        rootMargin: scrollDirection === "vertical" ? "-50% 0px -50% 0px" : "0px -50% 0px -50%",
+        rootMargin: "-50% 0px -50% 0px",
         threshold: 0,
       }
     );
@@ -79,6 +125,49 @@ export default function ImageGallery({ items }: { items: GalleryItem[] }) {
     };
   }, [items, scrollDirection]);
 
+  // Header visibility on scroll
+  useEffect(() => {
+    const handleScroll = () => {
+      const container = galleryRef.current;
+      if (!container) return;
+
+      if (scrollDirection === 'vertical') {
+        const currentScrollY = container.scrollTop;
+        if (currentScrollY > lastScrollY.current) {
+          setHeaderVisible(false); // Scrolling down
+        } else {
+          setHeaderVisible(true); // Scrolling up
+        }
+        lastScrollY.current = currentScrollY;
+      } else { // horizontal
+        const currentScrollX = container.scrollLeft;
+         if (currentScrollX > lastScrollX.current) {
+          setHeaderVisible(false); // Scrolling right
+        } else {
+          setHeaderVisible(true); // Scrolling left
+        }
+        lastScrollX.current = currentScrollX;
+      }
+    };
+
+    const container = galleryRef.current;
+    container?.addEventListener('scroll', handleScroll);
+    return () => container?.removeEventListener('scroll', handleScroll);
+  }, [scrollDirection]);
+
+
+  const handleSetScrollDirection = (dir: ScrollDirection) => {
+    if (items.some(item => item.type === 'folder') && dir === 'horizontal') {
+        toast({
+            title: "Horizontal Scroll Disabled",
+            description: "This view is not available for folders.",
+            variant: "destructive"
+        })
+        return;
+    }
+    setScrollDirection(dir);
+  }
+
   // Callback ref to populate refs map
   const setItemRef = useCallback((id: string, node: HTMLElement | null) => {
     if (node) {
@@ -88,66 +177,76 @@ export default function ImageGallery({ items }: { items: GalleryItem[] }) {
     }
   }, []);
 
+  const hasFolders = items.some(item => item.type === 'folder');
+
   return (
     <main className="bg-background text-primary h-screen w-screen overflow-hidden flex flex-col">
-      <header className="absolute top-0 left-0 w-full p-4 z-50 bg-gradient-to-b from-background/80 to-transparent">
+      <header 
+        className={cn(
+            "absolute top-0 left-0 w-full p-4 z-50 transition-all duration-300",
+            headerVisible ? "translate-y-0 bg-background/80" : "-translate-y-full"
+        )}
+      >
         <div className="container mx-auto flex justify-between items-center">
           <h1 className="text-2xl font-bold text-primary tracking-widest">ALLPI</h1>
           <ScrollToggle
             scrollDirection={scrollDirection}
-            setScrollDirection={setScrollDirection}
+            setScrollDirection={handleSetScrollDirection}
+            disableHorizontal={hasFolders}
           />
         </div>
       </header>
 
-      <div
-        ref={galleryRef}
-        className={cn(
-          "flex-1 w-full h-full pt-20 scroll-smooth",
-          scrollDirection === "vertical"
-            ? "flex flex-col items-center gap-16 overflow-y-auto px-4"
-            : "flex items-center gap-8 px-8 overflow-x-auto overflow-y-hidden"
-        )}
-      >
-        {items.map((item, index) => {
-          if (item.type === "folder") {
-            return (
-              <div
-                key={item.id}
-                className={cn(
-                  "flex-shrink-0",
-                  scrollDirection === "horizontal" && "h-[80vh]"
-                )}
-              >
-                <FolderLane
-                  folder={item}
-                  setRef={setItemRef}
-                  scrollDirection={scrollDirection}
-                />
-              </div>
-            );
-          }
-          if (item.type === "image") {
-            return (
-              <div
-                key={item.id}
-                ref={(node) => setItemRef(item.id, node)}
-                data-id={item.id}
-                className={cn(
-                  "flex-shrink-0 transition-all duration-300",
-                  scrollDirection === "vertical"
-                    ? "w-full max-w-5xl h-auto aspect-[4/3]"
-                    : "h-[80vh] aspect-auto"
-                )}
-              >
-                <ImageCard image={item} className="w-full h-full" priority={index < 3} />
-              </div>
-            );
-          }
-          return null;
-        })}
-        <div className="h-16 w-full flex-shrink-0" />
-      </div>
+      {scrollDirection === "vertical" ? (
+        <div
+          ref={galleryRef}
+          className="flex-1 w-full h-full pt-20 scroll-smooth flex flex-col items-center gap-16 overflow-y-auto px-4"
+        >
+          {items.map((item, index) => {
+            if (item.type === "folder") {
+              return (
+                <div key={item.id} className="w-full max-w-5xl flex-shrink-0">
+                  <FolderLane
+                    folder={item}
+                    setRef={setItemRef}
+                    scrollDirection={scrollDirection}
+                  />
+                </div>
+              );
+            }
+            if (item.type === "image") {
+              return (
+                <div
+                  key={item.id}
+                  ref={(node) => setItemRef(item.id, node)}
+                  data-id={item.id}
+                  className="w-full max-w-5xl h-auto aspect-[4/3] flex-shrink-0 transition-all duration-300"
+                >
+                  <ImageCard image={item} className="w-full h-full" priority={index < 3} />
+                </div>
+              );
+            }
+            return null;
+          })}
+          <div className="h-16 w-full flex-shrink-0" />
+        </div>
+      ) : (
+        <div ref={galleryRef} className="flex-1 w-full h-full pt-20 flex items-center justify-center">
+            <Carousel setApi={setCarouselApi} className="w-full h-full max-w-6xl">
+                <CarouselContent className="h-full">
+                {items.map((item, index) => (
+                    <CarouselItem key={item.id} className="flex items-center justify-center">
+                        <div className="h-[85%] w-auto aspect-video relative">
+                            <ImageCard image={item as any} className="w-full h-full" priority={index < 3} fit="contain" />
+                        </div>
+                    </CarouselItem>
+                ))}
+                </CarouselContent>
+                <CarouselPrevious className="left-4" />
+                <CarouselNext className="right-4" />
+            </Carousel>
+        </div>
+      )}
     </main>
   );
 }

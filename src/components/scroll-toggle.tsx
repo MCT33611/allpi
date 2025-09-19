@@ -1,6 +1,7 @@
 "use client";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "./ui/tooltip";
 
 type ScrollDirection = "vertical" | "horizontal";
 
@@ -45,40 +46,67 @@ const HorizontalIcon = () => (
 export default function ScrollToggle({
   scrollDirection,
   setScrollDirection,
+  disableHorizontal = false,
 }: {
   scrollDirection: ScrollDirection;
   setScrollDirection: (dir: ScrollDirection) => void;
+  disableHorizontal?: boolean;
 }) {
   return (
-    <div className="flex items-center gap-1 p-1 rounded-full border border-accent/50 bg-background/50 backdrop-blur-sm">
-      <Button
-        variant="ghost"
-        size="icon"
-        onClick={() => setScrollDirection("vertical")}
-        className={cn(
-          "rounded-full h-8 w-8 transition-colors",
-          scrollDirection === "vertical"
-            ? "bg-accent text-background"
-            : "hover:bg-accent/20"
-        )}
-        aria-label="Set vertical scroll"
-      >
-        <VerticalIcon />
-      </Button>
-      <Button
-        variant="ghost"
-        size="icon"
-        onClick={() => setScrollDirection("horizontal")}
-        className={cn(
-          "rounded-full h-8 w-8 transition-colors",
-          scrollDirection === "horizontal"
-            ? "bg-accent text-background"
-            : "hover:bg-accent/20"
-        )}
-        aria-label="Set horizontal scroll"
-      >
-        <HorizontalIcon />
-      </Button>
-    </div>
+    <TooltipProvider>
+      <div className="flex items-center gap-1 p-1 rounded-full border border-accent/50 bg-background/50 backdrop-blur-sm">
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => setScrollDirection("vertical")}
+          className={cn(
+            "rounded-full h-8 w-8 transition-colors",
+            scrollDirection === "vertical"
+              ? "bg-accent text-background"
+              : "hover:bg-accent/20"
+          )}
+          aria-label="Set vertical scroll"
+        >
+          <VerticalIcon />
+        </Button>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <div
+              className={cn(
+                "rounded-full",
+                disableHorizontal && "cursor-not-allowed"
+              )}
+            >
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => {
+                  if (!disableHorizontal) {
+                    setScrollDirection("horizontal");
+                  }
+                }}
+                className={cn(
+                  "rounded-full h-8 w-8 transition-colors",
+                  scrollDirection === "horizontal"
+                    ? "bg-accent text-background"
+                    : "hover:bg-accent/20",
+                  disableHorizontal &&
+                    "opacity-50 pointer-events-none"
+                )}
+                aria-label="Set horizontal scroll"
+                disabled={disableHorizontal}
+              >
+                <HorizontalIcon />
+              </Button>
+            </div>
+          </TooltipTrigger>
+          {disableHorizontal && (
+            <TooltipContent>
+              <p>Horizontal view not available for folders.</p>
+            </TooltipContent>
+          )}
+        </Tooltip>
+      </div>
+    </TooltipProvider>
   );
 }
