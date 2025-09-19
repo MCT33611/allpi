@@ -11,8 +11,6 @@ import {
   Carousel,
   CarouselContent,
   CarouselItem,
-  CarouselNext,
-  CarouselPrevious,
   type CarouselApi,
 } from "@/components/ui/carousel";
 import { useToast } from "@/hooks/use-toast";
@@ -133,27 +131,38 @@ export default function ImageGallery({ items }: { items: GalleryItem[] }) {
 
       if (scrollDirection === 'vertical') {
         const currentScrollY = container.scrollTop;
-        if (currentScrollY > lastScrollY.current) {
+        if (currentScrollY > lastScrollY.current && currentScrollY > 80) {
           setHeaderVisible(false); // Scrolling down
         } else {
           setHeaderVisible(true); // Scrolling up
         }
         lastScrollY.current = currentScrollY;
-      } else { // horizontal
-        const currentScrollX = container.scrollLeft;
-         if (currentScrollX > lastScrollX.current) {
-          setHeaderVisible(false); // Scrolling right
-        } else {
-          setHeaderVisible(true); // Scrolling left
-        }
-        lastScrollX.current = currentScrollX;
+      } else { // horizontal carousel does not scroll the galleryRef
+          const carouselContainer = container.querySelector('[data-embla-container]');
+          if (!carouselContainer) return;
+          const currentScrollX = carouselContainer.getBoundingClientRect().x;
+          if (currentScrollX < lastScrollX.current) {
+              setHeaderVisible(false); // Scrolling right
+          } else {
+              setHeaderVisible(true); // Scrolling left
+          }
+          lastScrollX.current = currentScrollX;
       }
     };
 
     const container = galleryRef.current;
-    container?.addEventListener('scroll', handleScroll);
-    return () => container?.removeEventListener('scroll', handleScroll);
-  }, [scrollDirection]);
+    if (scrollDirection === 'vertical') {
+        container?.addEventListener('scroll', handleScroll);
+    }
+    if (carouselApi && scrollDirection === 'horizontal') {
+        carouselApi.on('scroll', handleScroll);
+    }
+    
+    return () => {
+        container?.removeEventListener('scroll', handleScroll);
+        carouselApi?.off('scroll', handleScroll);
+    }
+  }, [scrollDirection, carouselApi]);
 
 
   const handleSetScrollDirection = (dir: ScrollDirection) => {
@@ -233,17 +242,15 @@ export default function ImageGallery({ items }: { items: GalleryItem[] }) {
       ) : (
         <div ref={galleryRef} className="flex-1 w-full h-full pt-20 flex items-center justify-center">
             <Carousel setApi={setCarouselApi} className="w-full h-full max-w-6xl">
-                <CarouselContent className="h-full">
+                <CarouselContent className="h-full" data-embla-container>
                 {items.map((item, index) => (
                     <CarouselItem key={item.id} className="flex items-center justify-center">
-                        <div className="h-[85%] w-auto aspect-video relative">
+                        <div className="h-full w-full p-8 relative">
                             <ImageCard image={item as any} className="w-full h-full" priority={index < 3} fit="contain" />
                         </div>
                     </CarouselItem>
                 ))}
                 </CarouselContent>
-                <CarouselPrevious className="left-4" />
-                <CarouselNext className="right-4" />
             </Carousel>
         </div>
       )}
