@@ -1,7 +1,10 @@
 
 'use server';
 import {z} from 'zod';
-import {determineGalleryLayout} from '@/ai/flows/determine-gallery-layout';
+import {
+  determineGalleryLayout,
+  type DetermineGalleryLayoutInput,
+} from '@/ai/flows/determine-gallery-layout';
 
 const REPO_OWNER = 'MCT33611';
 const REPO_NAME = 'allpi';
@@ -48,7 +51,7 @@ async function getRepoTree(): Promise<z.infer<typeof GithubTreeFileSchema>[]> {
         Accept: 'application/vnd.github.v3+json',
         'X-GitHub-Api-Version': '2022-11-28',
       },
-      next: {revalidate: 3600},
+      next: {revalidate: 3600}, // Cache for 1 hour
     });
     if (!response.ok) {
       console.error(
@@ -78,8 +81,11 @@ function getBaseImageUrl(path: string) {
 }
 
 // ---------- Main ----------
-export async function getGalleryItems(): Promise<GalleryItem[]> {
+export async function getGalleryItems(): Promise<GalleryItem[] | null> {
   const repoTree = await getRepoTree();
+  if (repoTree.length === 0) {
+    return [];
+  }
 
   const imageFiles = repoTree.filter(
     file =>
@@ -88,8 +94,8 @@ export async function getGalleryItems(): Promise<GalleryItem[]> {
       isImageFile(file.path)
   );
 
-  const folders: {[key: string]: Omit<Folder, 'layout'>} = {};
-  const rootImages: Omit<ImageFile, 'layout'>[] = [];
+  const folders: {[key: string]: Omit<Folder, 'layout' | 'images'> & {images: ImageFile[]}} = {};
+  const rootImages: ImageFile[] = [];
 
   for (const file of imageFiles) {
     const pathParts = file.path.split('/');
@@ -98,18 +104,16 @@ export async function getGalleryItems(): Promise<GalleryItem[]> {
     const fileName = pathParts[pathParts.length - 1];
     const isRootImage = pathParts.length === 2;
 
-    const image: Omit<ImageFile, 'type'> = {
+    const image: ImageFile = {
       id: file.sha,
+      type: 'image',
       name: fileName,
       path: file.path,
       url: getBaseImageUrl(file.path),
     };
 
     if (isRootImage) {
-      rootImages.push({
-        ...image,
-        type: 'image',
-      });
+      rootImages.push(image);
     } else {
       const folderPath = pathParts.slice(1, -1).join('/');
       if (!folders[folderPath]) {
@@ -126,7 +130,7 @@ export async function getGalleryItems(): Promise<GalleryItem[]> {
   }
 
   const folderItems = Object.values(folders);
-  const allItems: (Omit<GalleryItem, 'layout'>)[] = [
+  const allItems: (ImageFile | Omit<Folder, 'layout'>)[] = [
     ...rootImages,
     ...folderItems,
   ];
@@ -136,24 +140,36 @@ export async function getGalleryItems(): Promise<GalleryItem[]> {
   }
 
   try {
-    const layoutResult = await determineGalleryLayout({items: allItems});
+    const layoutInput: DetermineGalleryLayoutInput = {
+      items: allItems.map(item => ({
+        id: item.id,
+        type: item.type,
+        name: item.name,
+        path: item.path,
+      })),
+    };
+    
+    const { itemsWithLayout: layoutResult } = await determineGalleryLayout(layoutInput);
 
-    const galleryItems: GalleryItem[] = layoutResult.itemsWithLayout;
+    const layoutMap = new Map(layoutResult.map(item => [item.id, item.layout]));
 
-    galleryItems.sort((a, b) => a.path.localeCompare(b.path));
-    galleryItems.forEach(item => {
+    const galleryItems: GalleryItem[] = allItems.map(item => {
+      const layout = layoutMap.get(item.id) || (item.type === 'folder' ? 'horizontal' : 'vertical');
       if (item.type === 'folder') {
-        item.images.sort((a, b) => a.name.localeCompare(b.name));
+        return {
+          ...item,
+          layout: layout,
+          images: item.images.sort((a,b) => a.name.localeCompare(b.name))
+        } as Folder
       }
+      return { ...item, layout } as ImageFile & { layout: 'horizontal' | 'vertical' };
     });
+    
+    galleryItems.sort((a, b) => a.path.localeCompare(b.path));
 
     return galleryItems;
   } catch (error) {
-    console.error('Error applying AI layout, returning items without layout:', error);
-    // Fallback to default layouts if AI fails
-    return allItems.map(item => ({
-      ...item,
-      layout: item.type === 'folder' ? 'horizontal' : 'vertical',
-    })) as GalleryItem[];
+    console.error('Error in getGalleryItems:', error);
+    return null;
   }
 }

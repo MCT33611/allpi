@@ -18,7 +18,7 @@ import Loading from "@/app/loading";
 
 type ScrollDirection = "vertical" | "horizontal";
 
-export default function ImageGallery({ items }: { items: GalleryItem[] }) {
+export default function ImageGallery({ items }: { items: GalleryItem[] | null }) {
   const [isClient, setIsClient] = useState(false);
   const [scrollDirection, setScrollDirection] = useState<ScrollDirection>("vertical");
   const galleryRef = useRef<HTMLDivElement>(null);
@@ -31,7 +31,8 @@ export default function ImageGallery({ items }: { items: GalleryItem[] }) {
 
   const itemRefs = useRef(new Map<string, HTMLElement>());
   const carouselItemRefs = useRef(new Map<string, number>());
-  items.forEach((item, index) => {
+  
+  items?.forEach((item, index) => {
     carouselItemRefs.current.set(item.id, index);
     if(item.type === 'folder') {
       item.images.forEach(img => {
@@ -45,7 +46,7 @@ export default function ImageGallery({ items }: { items: GalleryItem[] }) {
   }, []);
 
   useEffect(() => {
-    if (!isClient || !items.length) return;
+    if (!isClient || !items?.length) return;
 
     const startImageId = searchParams.get("imageId") || localStorage.getItem("lastSeenImageId");
 
@@ -74,7 +75,7 @@ export default function ImageGallery({ items }: { items: GalleryItem[] }) {
 
 
   useEffect(() => {
-    if (!carouselApi || !isClient) return;
+    if (!carouselApi || !isClient || !items) return;
 
     const onSelect = (api: CarouselApi) => {
       const slideIndex = api.selectedScrollSnap();
@@ -95,7 +96,7 @@ export default function ImageGallery({ items }: { items: GalleryItem[] }) {
 
 
   useEffect(() => {
-    if (scrollDirection !== 'vertical' || !isClient) return;
+    if (scrollDirection !== 'vertical' || !isClient || !items) return;
 
     const observer = new IntersectionObserver(
       (entries) => {
@@ -179,7 +180,7 @@ export default function ImageGallery({ items }: { items: GalleryItem[] }) {
     }
   }, []);
 
-  if (!isClient) {
+  if (!isClient || !items) {
     return <Loading />;
   }
 

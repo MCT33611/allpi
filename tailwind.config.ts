@@ -88,10 +88,25 @@ export default {
             height: '0',
           },
         },
+        'youtube-loader': {
+          '0%': {
+            transform: 'translateX(-100%)',
+            width: '10%',
+          },
+          '50%': {
+            transform: 'translateX(500%)',
+            width: '40%',
+          },
+          '100%': {
+            transform: 'translateX(1000%)',
+            width: '10%',
+          },
+        },
       },
       animation: {
         'accordion-down': 'accordion-down 0.2s ease-out',
         'accordion-up': 'accordion-up 0.2s ease-out',
+        'youtube-loader': 'youtube-loader 1.5s infinite linear',
       },
     },
   },

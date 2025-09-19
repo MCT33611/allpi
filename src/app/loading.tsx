@@ -8,6 +8,11 @@ export default function Loading() {
           <h1 className="text-2xl font-bold text-primary">ALLPI</h1>
           <Skeleton className="w-24 h-10 rounded-full" />
         </div>
+        <div className="absolute bottom-0 left-0 w-full h-1 overflow-hidden">
+          <div className="w-full h-full bg-accent/20">
+            <div className="h-full bg-accent animate-youtube-loader"></div>
+          </div>
+        </div>
       </header>
       <div className="flex-1 pt-24 pb-8 w-full h-full flex flex-col items-center gap-16 overflow-y-auto px-4">
         <Skeleton className="w-full max-w-5xl h-auto aspect-[4/3] rounded-lg" />
