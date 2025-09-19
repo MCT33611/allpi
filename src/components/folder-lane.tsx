@@ -21,12 +21,12 @@ export default function FolderLane({
       <div
         ref={(node) => setRef(folderId, node)}
         data-id={folderId}
-        className="w-full h-full flex flex-col gap-4 p-4 border-2 border-accent/50 rounded-lg bg-background/30"
+        className="w-full h-full flex flex-col gap-4 p-2 border-2 border-accent/50 rounded-lg bg-background/30"
       >
         <h2 className="text-xl font-semibold text-accent text-center">
           {folder.name}
         </h2>
-        <div className="flex-1 flex flex-col gap-4 overflow-y-auto pr-2 snap-y snap-mandatory">
+        <div className="flex-1 flex flex-col gap-4 overflow-y-auto pr-2 snap-y snap-mandatory min-h-0">
           {folder.images.map((image) => (
             <div
               key={image.id}
