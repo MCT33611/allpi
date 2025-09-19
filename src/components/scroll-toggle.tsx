@@ -1,0 +1,84 @@
+"use client";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
+
+type ScrollDirection = "vertical" | "horizontal";
+
+const VerticalIcon = () => (
+  <svg
+    width="24"
+    height="24"
+    viewBox="0 0 24 24"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+    className="w-6 h-6"
+  >
+    <path
+      d="M12 21V3M12 21L17 16M12 21L7 16M12 3L17 8M12 3L7 8"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </svg>
+);
+
+const HorizontalIcon = () => (
+  <svg
+    width="24"
+    height="24"
+    viewBox="0 0 24 24"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+    className="w-6 h-6"
+  >
+    <path
+      d="M3 12H21M3 12L8 7M3 12L8 17M21 12L16 7M21 12L16 17"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </svg>
+);
+
+export default function ScrollToggle({
+  scrollDirection,
+  setScrollDirection,
+}: {
+  scrollDirection: ScrollDirection;
+  setScrollDirection: (dir: ScrollDirection) => void;
+}) {
+  return (
+    <div className="flex items-center gap-1 p-1 rounded-full border border-accent/50 bg-background/50 backdrop-blur-sm">
+      <Button
+        variant="ghost"
+        size="icon"
+        onClick={() => setScrollDirection("vertical")}
+        className={cn(
+          "rounded-full h-8 w-8 transition-colors",
+          scrollDirection === "vertical"
+            ? "bg-accent text-background"
+            : "hover:bg-accent/20"
+        )}
+        aria-label="Set vertical scroll"
+      >
+        <VerticalIcon />
+      </Button>
+      <Button
+        variant="ghost"
+        size="icon"
+        onClick={() => setScrollDirection("horizontal")}
+        className={cn(
+          "rounded-full h-8 w-8 transition-colors",
+          scrollDirection === "horizontal"
+            ? "bg-accent text-background"
+            : "hover:bg-accent/20"
+        )}
+        aria-label="Set horizontal scroll"
+      >
+        <HorizontalIcon />
+      </Button>
+    </div>
+  );
+}
