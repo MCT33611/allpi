@@ -14,10 +14,12 @@ import {
   type CarouselApi,
 } from "@/components/ui/carousel";
 import { useToast } from "@/hooks/use-toast";
+import Loading from "@/app/loading";
 
 type ScrollDirection = "vertical" | "horizontal";
 
 export default function ImageGallery({ items }: { items: GalleryItem[] }) {
+  const [isClient, setIsClient] = useState(false);
   const [scrollDirection, setScrollDirection] = useState<ScrollDirection>("vertical");
   const galleryRef = useRef<HTMLDivElement>(null);
   const searchParams = useSearchParams();
@@ -39,10 +41,13 @@ export default function ImageGallery({ items }: { items: GalleryItem[] }) {
     }
   });
 
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   // Scroll to initial image
   useEffect(() => {
-    if (!items.length) return;
+    if (!isClient || !items.length) return;
 
     const startImageId = searchParams.get("imageId") || localStorage.getItem("lastSeenImageId");
 
@@ -67,12 +72,12 @@ export default function ImageGallery({ items }: { items: GalleryItem[] }) {
             }
         }
     }
-  }, [searchParams, items, carouselApi, scrollDirection]);
+  }, [searchParams, items, carouselApi, scrollDirection, isClient]);
 
 
   // Carousel slide change handler
   useEffect(() => {
-    if (!carouselApi) return;
+    if (!carouselApi || !isClient) return;
 
     const onSelect = (api: CarouselApi) => {
       const slideIndex = api.selectedScrollSnap();
@@ -89,12 +94,12 @@ export default function ImageGallery({ items }: { items: GalleryItem[] }) {
     return () => {
       carouselApi.off("select", onSelect);
     };
-  }, [carouselApi, items]);
+  }, [carouselApi, items, isClient]);
 
 
   // Intersection Observer for vertical scroll
   useEffect(() => {
-    if (scrollDirection !== 'vertical') return;
+    if (scrollDirection !== 'vertical' || !isClient) return;
 
     const observer = new IntersectionObserver(
       (entries) => {
@@ -121,10 +126,11 @@ export default function ImageGallery({ items }: { items: GalleryItem[] }) {
     return () => {
       elements.forEach((el) => observer.unobserve(el));
     };
-  }, [items, scrollDirection]);
+  }, [items, scrollDirection, isClient]);
 
   // Header visibility on scroll
   useEffect(() => {
+    if (!isClient) return;
     const handleScroll = () => {
       const container = galleryRef.current;
       if (!container) return;
@@ -162,7 +168,7 @@ export default function ImageGallery({ items }: { items: GalleryItem[] }) {
         container?.removeEventListener('scroll', handleScroll);
         carouselApi?.off('scroll', handleScroll);
     }
-  }, [scrollDirection, carouselApi]);
+  }, [scrollDirection, carouselApi, isClient]);
 
 
   const handleSetScrollDirection = (dir: ScrollDirection) => {
@@ -178,7 +184,9 @@ export default function ImageGallery({ items }: { items: GalleryItem[] }) {
     }
   }, []);
 
-  const hasFolders = items.some(item => item.type === 'folder');
+  if (!isClient) {
+    return <Loading />;
+  }
 
   return (
     <main className="bg-background text-primary h-screen w-screen overflow-hidden flex flex-col">
