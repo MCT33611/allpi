@@ -14,6 +14,7 @@ import {
   type CarouselApi,
 } from "@/components/ui/carousel";
 import { useToast } from "@/hooks/use-toast";
+import { CarouselNext, CarouselPrevious } from "./ui/carousel";
 
 type ScrollDirection = "vertical" | "horizontal";
 
@@ -244,8 +245,8 @@ export default function ImageGallery({ items }: { items: GalleryItem[] }) {
             <Carousel setApi={setCarouselApi} className="w-full h-full max-w-6xl">
                 <CarouselContent className="h-full" data-embla-container>
                 {items.map((item, index) => (
-                    <CarouselItem key={item.id} className="h-full w-full relative">
-                        <ImageCard image={item as any} className="w-full h-full p-8" priority={index < 3} fit="contain" />
+                    <CarouselItem key={item.id} className="h-full w-full relative p-4">
+                        <ImageCard image={item as any} className="w-full h-full" priority={index < 3} fit="contain" />
                     </CarouselItem>
                 ))}
                 </CarouselContent>
