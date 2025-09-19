@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
@@ -13,7 +14,6 @@ import {
   CarouselItem,
   type CarouselApi,
 } from "@/components/ui/carousel";
-import { useToast } from "@/hooks/use-toast";
 import Loading from "@/app/loading";
 
 type ScrollDirection = "vertical" | "horizontal";
@@ -23,7 +23,6 @@ export default function ImageGallery({ items }: { items: GalleryItem[] }) {
   const [scrollDirection, setScrollDirection] = useState<ScrollDirection>("vertical");
   const galleryRef = useRef<HTMLDivElement>(null);
   const searchParams = useSearchParams();
-  const { toast } = useToast();
 
   const [carouselApi, setCarouselApi] = useState<CarouselApi>();
   const [headerVisible, setHeaderVisible] = useState(true);
@@ -55,7 +54,9 @@ export default function ImageGallery({ items }: { items: GalleryItem[] }) {
         const index = carouselItemRefs.current.get(startImageId);
         if (typeof index === 'number') {
             if (scrollDirection === 'horizontal' && carouselApi) {
-                carouselApi.scrollTo(index, true);
+                // The scrollTo method might be called before the carousel is fully ready.
+                // A small timeout can help ensure it works reliably.
+                setTimeout(() => carouselApi.scrollTo(index, true), 100);
             } else {
                  let attempts = 0;
                 const maxAttempts = 100;
@@ -217,7 +218,7 @@ export default function ImageGallery({ items }: { items: GalleryItem[] }) {
                   <FolderLane
                     folder={item}
                     setRef={setItemRef}
-                    scrollDirection={scrollDirection}
+                    scrollDirection="vertical"
                   />
                 </div>
               );
@@ -243,7 +244,7 @@ export default function ImageGallery({ items }: { items: GalleryItem[] }) {
             <Carousel setApi={setCarouselApi} className="w-full h-full max-w-6xl">
                 <CarouselContent className="h-full" data-embla-container>
                 {items.map((item, index) => (
-                    <CarouselItem key={item.id} className="h-full w-full relative p-2">
+                    <CarouselItem key={item.id} className="h-full w-full relative p-4">
                        {item.type === 'image' ? (
                           <ImageCard image={item} className="w-full h-full" priority={index < 3} fit="contain" />
                        ) : (

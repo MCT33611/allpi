@@ -1,3 +1,4 @@
+
 "use client";
 import type { Folder } from "@/lib/gallery";
 import ImageCard from "./image-card";
@@ -17,6 +18,7 @@ export default function FolderLane({
   const folderId = folder.images[0]?.id || folder.id;
 
   if (scrollDirection === "horizontal") {
+    // This is the view inside the full-screen horizontal carousel
     return (
       <div
         ref={(node) => setRef(folderId, node)}
@@ -34,7 +36,7 @@ export default function FolderLane({
               data-id={image.id}
               className="w-full h-auto aspect-[4/3] flex-shrink-0 snap-center"
             >
-              <ImageCard image={image} />
+              <ImageCard image={image} fit="contain" />
             </div>
           ))}
         </div>
@@ -42,7 +44,7 @@ export default function FolderLane({
     );
   }
 
-  // Default is vertical scroll for main page
+  // Default is the horizontal folder view on the main vertical page
   return (
     <div
       ref={(node) => setRef(folderId, node)}

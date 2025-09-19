@@ -1,5 +1,7 @@
+
 "use server";
 import { z } from "zod";
+import { determineImageLayout } from "@/ai/flows/determine-image-layout";
 
 const REPO_OWNER = "MCT33611";
 const REPO_NAME = "allpi";
@@ -10,14 +12,10 @@ const GithubTreeFileSchema = z.object({
   path: z.string(),
   type: z.enum(["blob", "tree", "commit"]),
   sha: z.string(),
-  url: z.string().url(),
 });
 
 const GithubTreeSchema = z.object({
-  sha: z.string(),
-  url: z.string().url(),
   tree: z.array(GithubTreeFileSchema),
-  truncated: z.boolean(),
 });
 
 export type ImageFile = {
@@ -77,22 +75,43 @@ function getBaseImageUrl(path: string) {
   return `https://raw.githubusercontent.com/${REPO_OWNER}/${REPO_NAME}/${REPO_BRANCH}/${path}`;
 }
 
+async function getLayoutForGalleryItem(item: Omit<GalleryItem, 'layout'>): Promise<'horizontal' | 'vertical'> {
+    try {
+        const input = {
+            location: item.path,
+            extension: item.type === 'image' ? item.name.split('.').pop() || '' : '',
+            isFolder: item.type === 'folder',
+            imageCount: item.type === 'folder' ? item.images.length : undefined,
+            // These are omitted as we don't have image dimensions available here
+            // averageImageWidth: undefined, 
+            // averageImageHeight: undefined,
+        }
+        const result = await determineImageLayout(input);
+        return result.layoutStrategy;
+    } catch (error) {
+        console.error("Error determining layout, defaulting to horizontal for folders and vertical for images", error);
+        return item.type === 'folder' ? 'horizontal' : 'vertical';
+    }
+}
+
+
 // ---------- Main ----------
 export async function getGalleryItems(): Promise<GalleryItem[]> {
   const repoTree = await getRepoTree();
-
-  // Filter only images inside "pics/"
+  
   const imageFiles = repoTree.filter(
     (file) => file.type === "blob" && file.path.startsWith("pics/") && isImageFile(file.path)
   );
 
-  const folders: { [key: string]: Folder } = {};
-  const rootImages: GalleryItem[] = [];
+  const folders: { [key: string]: Omit<Folder, 'layout'> } = {};
+  const rootImages: Omit<ImageFile & { type: 'image' }, 'layout'>[] = [];
 
   for (const file of imageFiles) {
-    const pathParts = file.path.split("/"); // e.g. ['pics', 'landscapes', 'mountains', 'image.jpg']
-    const fileName = pathParts.at(-1)!;
-    const folderPath = pathParts.slice(1, -1).join("/"); // "landscapes/mountains"
+    const pathParts = file.path.split("/"); // e.g. ['pics', 'landscapes', 'image.jpg']
+    if (pathParts.length <= 1) continue; // Skip files directly in root
+    
+    const fileName = pathParts.pop()!; // 'image.jpg'
+    const parentPath = pathParts.slice(1).join('/'); // 'landscapes' or ''
 
     const image: Omit<ImageFile, "type"> = {
       id: file.sha,
@@ -101,38 +120,44 @@ export async function getGalleryItems(): Promise<GalleryItem[]> {
       url: getBaseImageUrl(file.path),
     };
 
-    if (folderPath) {
-      if (!folders[folderPath]) {
-        folders[folderPath] = {
-          id: `${REPO_NAME}-folder-${folderPath}`,
+    if (parentPath) { // It's in a folder
+      if (!folders[parentPath]) {
+        folders[parentPath] = {
+          id: `${REPO_NAME}-folder-${parentPath}`,
           type: "folder",
-          name: folderPath, // keep relative folder path as name
-          path: `pics/${folderPath}`,
+          name: parentPath.split('/').pop()!,
+          path: `pics/${parentPath}`,
           images: [],
-          layout: "horizontal",
         };
       }
-      folders[folderPath].images.push(image);
-    } else {
-      // directly inside "pics/"
+      folders[parentPath].images.push(image);
+    } else { // It's directly in 'pics/'
       rootImages.push({
         ...image,
-        type: "image",
-        layout: "vertical",
+        type: 'image'
       });
     }
   }
 
-  const folderItems: GalleryItem[] = Object.values(folders);
+  const folderItems = Object.values(folders);
+  const allItems: (Omit<GalleryItem, 'layout'>)[] = [...rootImages, ...folderItems];
+
+  const layoutPromises = allItems.map(item => getLayoutForGalleryItem(item));
+  const layouts = await Promise.all(layoutPromises);
+  
+  const galleryItems: GalleryItem[] = allItems.map((item, index) => ({
+      ...item,
+      layout: layouts[index]
+  }));
+
 
   // Sort folders by path/name and images inside them by name
-  folderItems.sort((a, b) => a.name.localeCompare(b.name));
-  folderItems.forEach((folder) => {
-    folder.images.sort((a, b) => a.name.localeCompare(b.name));
+  galleryItems.sort((a, b) => a.path.localeCompare(b.path));
+  galleryItems.forEach((item) => {
+    if (item.type === 'folder') {
+        item.images.sort((a, b) => a.name.localeCompare(b.name));
+    }
   });
 
-  // Sort root images by name
-  rootImages.sort((a, b) => a.name.localeCompare(b.name));
-
-  return [...rootImages, ...folderItems];
+  return galleryItems;
 }
