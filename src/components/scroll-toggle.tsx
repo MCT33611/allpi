@@ -102,7 +102,7 @@ export default function ScrollToggle({
           </TooltipTrigger>
           {disableHorizontal && (
             <TooltipContent>
-              <p>Horizontal view not available for folders.</p>
+              <p>Horizontal view not available for this content.</p>
             </TooltipContent>
           )}
         </Tooltip>

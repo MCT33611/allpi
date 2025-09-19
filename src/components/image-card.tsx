@@ -17,7 +17,7 @@ export default function ImageCard({
   image,
   className,
   priority = false,
-  fit = "cover",
+  fit = "contain",
 }: ImageCardProps) {
   const [isLoading, setIsLoading] = useState(true);
 
@@ -35,8 +35,8 @@ export default function ImageCard({
         fill
         sizes="(max-width: 768px) 80vw, (max-width: 1200px) 50vw, 33vw"
         className={cn(
-          "transition-opacity duration-300 ease-in-out",
-          fit === "cover" && "object-cover group-hover:scale-105",
+          "transition-opacity duration-300 ease-in-out group-hover:scale-105",
+          fit === "cover" && "object-cover",
           fit === "contain" && "object-contain",
           isLoading ? "opacity-0" : "opacity-100"
         )}
