@@ -23,7 +23,7 @@ export default function FolderLane({
       <div
         ref={(node) => setRef(folderId, node)}
         data-id={folderId}
-        className="w-full h-full flex flex-col gap-4 p-2 border-2 border-accent/50 rounded-lg bg-background/30"
+        className="w-full h-full flex flex-col gap-4 p-1 border-2 border-accent/50 rounded-lg bg-background/30"
       >
         <h2 className="text-xl font-semibold text-accent text-center">
           {folder.name}
@@ -62,7 +62,7 @@ export default function FolderLane({
             data-id={image.id}
             className={cn(
                 "w-[80vw] sm:w-[60vw] md:w-[40vw] lg:w-[30vw] h-auto aspect-[4/3] flex-shrink-0 snap-start",
-                index === 0 && 'ml-4 md:ml-0' // Add margin to first item
+                index === 0 && 'ml-4 md:ml-0'
             )}
           >
             <ImageCard image={image} fit="cover"/>

@@ -44,7 +44,6 @@ export default function ImageGallery({ items }: { items: GalleryItem[] }) {
     setIsClient(true);
   }, []);
 
-  // Scroll to initial image
   useEffect(() => {
     if (!isClient || !items.length) return;
 
@@ -54,8 +53,6 @@ export default function ImageGallery({ items }: { items: GalleryItem[] }) {
         const index = carouselItemRefs.current.get(startImageId);
         if (typeof index === 'number') {
             if (scrollDirection === 'horizontal' && carouselApi) {
-                // The scrollTo method might be called before the carousel is fully ready.
-                // A small timeout can help ensure it works reliably.
                 setTimeout(() => carouselApi.scrollTo(index, true), 100);
             } else {
                  let attempts = 0;
@@ -66,7 +63,7 @@ export default function ImageGallery({ items }: { items: GalleryItem[] }) {
                         element.scrollIntoView({ behavior: "auto", block: "center" });
                     } else if (attempts < maxAttempts) {
                         attempts++;
-                        setTimeout(tryScroll, 50); // Retry after a short delay
+                        setTimeout(tryScroll, 50);
                     }
                 };
                 setTimeout(tryScroll, 100);
@@ -76,7 +73,6 @@ export default function ImageGallery({ items }: { items: GalleryItem[] }) {
   }, [searchParams, items, carouselApi, scrollDirection, isClient]);
 
 
-  // Carousel slide change handler
   useEffect(() => {
     if (!carouselApi || !isClient) return;
 
@@ -98,7 +94,6 @@ export default function ImageGallery({ items }: { items: GalleryItem[] }) {
   }, [carouselApi, items, isClient]);
 
 
-  // Intersection Observer for vertical scroll
   useEffect(() => {
     if (scrollDirection !== 'vertical' || !isClient) return;
 
@@ -129,7 +124,7 @@ export default function ImageGallery({ items }: { items: GalleryItem[] }) {
     };
   }, [items, scrollDirection, isClient]);
 
-  // Header visibility on scroll
+
   useEffect(() => {
     if (!isClient) return;
     const handleScroll = () => {
@@ -139,19 +134,19 @@ export default function ImageGallery({ items }: { items: GalleryItem[] }) {
       if (scrollDirection === 'vertical') {
         const currentScrollY = container.scrollTop;
         if (currentScrollY > lastScrollY.current && currentScrollY > 80) {
-          setHeaderVisible(false); // Scrolling down
+          setHeaderVisible(false);
         } else {
-          setHeaderVisible(true); // Scrolling up
+          setHeaderVisible(true);
         }
         lastScrollY.current = currentScrollY;
-      } else { // horizontal carousel does not scroll the galleryRef
+      } else {
           const carouselContainer = container.querySelector('[data-embla-container]');
           if (!carouselContainer) return;
           const currentScrollX = carouselContainer.getBoundingClientRect().x;
           if (currentScrollX < lastScrollX.current) {
-              setHeaderVisible(false); // Scrolling right
+              setHeaderVisible(false);
           } else {
-              setHeaderVisible(true); // Scrolling left
+              setHeaderVisible(true);
           }
           lastScrollX.current = currentScrollX;
       }
@@ -176,7 +171,6 @@ export default function ImageGallery({ items }: { items: GalleryItem[] }) {
     setScrollDirection(dir);
   }
 
-  // Callback ref to populate refs map
   const setItemRef = useCallback((id: string, node: HTMLElement | null) => {
     if (node) {
       itemRefs.current.set(id, node);
@@ -194,7 +188,7 @@ export default function ImageGallery({ items }: { items: GalleryItem[] }) {
       <header 
         className={cn(
             "absolute top-0 left-0 w-full p-4 z-50 transition-all duration-300",
-            headerVisible ? "translate-y-0 bg-background/80" : "-translate-y-full"
+            headerVisible ? "translate-y-0 bg-gradient-to-b from-background/80 to-transparent" : "-translate-y-full"
         )}
       >
         <div className="container mx-auto flex justify-between items-center">
@@ -209,7 +203,7 @@ export default function ImageGallery({ items }: { items: GalleryItem[] }) {
       {scrollDirection === "vertical" ? (
         <div
           ref={galleryRef}
-          className="flex-1 w-full h-full pt-20 scroll-smooth flex flex-col items-center gap-16 overflow-y-auto px-4"
+          className="flex-1 w-full h-full pt-24 pb-8 scroll-smooth flex flex-col items-center gap-16 overflow-y-auto px-4"
         >
           {items.map((item, index) => {
             if (item.type === "folder") {
@@ -242,9 +236,9 @@ export default function ImageGallery({ items }: { items: GalleryItem[] }) {
       ) : (
         <div ref={galleryRef} className="flex-1 w-full h-full pt-20 flex items-center justify-center">
             <Carousel setApi={setCarouselApi} className="w-full h-full max-w-6xl">
-                <CarouselContent className="h-full" data-embla-container>
+                <CarouselContent className="h-full p-4" data-embla-container>
                 {items.map((item, index) => (
-                    <CarouselItem key={item.id} className="h-full w-full relative p-4">
+                    <CarouselItem key={item.id} className="h-full w-full relative">
                        {item.type === 'image' ? (
                           <ImageCard image={item} className="w-full h-full" priority={index < 3} fit="contain" />
                        ) : (

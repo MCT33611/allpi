@@ -1,16 +1,16 @@
 
-"use server";
-import { z } from "zod";
-import { determineImageLayout } from "@/ai/flows/determine-image-layout";
+'use server';
+import {z} from 'zod';
+import {determineGalleryLayout} from '@/ai/flows/determine-gallery-layout';
 
-const REPO_OWNER = "MCT33611";
-const REPO_NAME = "allpi";
-const REPO_BRANCH = "main";
+const REPO_OWNER = 'MCT33611';
+const REPO_NAME = 'allpi';
+const REPO_BRANCH = 'main';
 
 // ---------- Types ----------
 const GithubTreeFileSchema = z.object({
   path: z.string(),
-  type: z.enum(["blob", "tree", "commit"]),
+  type: z.enum(['blob', 'tree', 'commit']),
   sha: z.string(),
 });
 
@@ -20,7 +20,7 @@ const GithubTreeSchema = z.object({
 
 export type ImageFile = {
   id: string;
-  type: "image";
+  type: 'image';
   name: string;
   path: string;
   url: string;
@@ -28,15 +28,15 @@ export type ImageFile = {
 
 export type Folder = {
   id: string;
-  type: "folder";
-  name: string; // folder name only
-  path: string; // relative path
-  images: Omit<ImageFile, "type">[];
-  layout: "horizontal" | "vertical";
+  type: 'folder';
+  name: string;
+  path: string;
+  images: Omit<ImageFile, 'type'>[];
+  layout: 'horizontal' | 'vertical';
 };
 
 export type GalleryItem =
-  | (ImageFile & { layout: "vertical" | "horizontal" })
+  | (ImageFile & {layout: 'vertical' | 'horizontal'})
   | Folder;
 
 // ---------- Helpers ----------
@@ -45,24 +45,26 @@ async function getRepoTree(): Promise<z.infer<typeof GithubTreeFileSchema>[]> {
   try {
     const response = await fetch(url, {
       headers: {
-        Accept: "application/vnd.github.v3+json",
-        "X-GitHub-Api-Version": "2022-11-28",
+        Accept: 'application/vnd.github.v3+json',
+        'X-GitHub-Api-Version': '2022-11-28',
       },
-      next: { revalidate: 3600 }, // Re-fetch every hour
+      next: {revalidate: 3600},
     });
     if (!response.ok) {
-      console.error(`Failed to fetch GitHub repo tree. Status: ${response.status}`);
+      console.error(
+        `Failed to fetch GitHub repo tree. Status: ${response.status}`
+      );
       return [];
     }
     const data = await response.json();
     const parsedData = GithubTreeSchema.safeParse(data);
     if (!parsedData.success) {
-      console.error("Failed to parse GitHub repo tree:", parsedData.error);
+      console.error('Failed to parse GitHub repo tree:', parsedData.error);
       return [];
     }
     return parsedData.data.tree;
   } catch (error) {
-    console.error("Error fetching repo tree:", error);
+    console.error('Error fetching repo tree:', error);
     return [];
   }
 }
@@ -75,89 +77,83 @@ function getBaseImageUrl(path: string) {
   return `https://raw.githubusercontent.com/${REPO_OWNER}/${REPO_NAME}/${REPO_BRANCH}/${path}`;
 }
 
-async function getLayoutForGalleryItem(item: Omit<GalleryItem, 'layout'>): Promise<'horizontal' | 'vertical'> {
-    try {
-        const input = {
-            location: item.path,
-            extension: item.type === 'image' ? item.name.split('.').pop() || '' : '',
-            isFolder: item.type === 'folder',
-            imageCount: item.type === 'folder' ? item.images.length : undefined,
-            // These are omitted as we don't have image dimensions available here
-            // averageImageWidth: undefined, 
-            // averageImageHeight: undefined,
-        }
-        const result = await determineImageLayout(input);
-        return result.layoutStrategy;
-    } catch (error) {
-        console.error("Error determining layout, defaulting to horizontal for folders and vertical for images", error);
-        return item.type === 'folder' ? 'horizontal' : 'vertical';
-    }
-}
-
-
 // ---------- Main ----------
 export async function getGalleryItems(): Promise<GalleryItem[]> {
   const repoTree = await getRepoTree();
-  
+
   const imageFiles = repoTree.filter(
-    (file) => file.type === "blob" && file.path.startsWith("pics/") && isImageFile(file.path)
+    file =>
+      file.type === 'blob' &&
+      file.path.startsWith('pics/') &&
+      isImageFile(file.path)
   );
 
-  const folders: { [key: string]: Omit<Folder, 'layout'> } = {};
-  const rootImages: Omit<ImageFile & { type: 'image' }, 'layout'>[] = [];
+  const folders: {[key: string]: Omit<Folder, 'layout'>} = {};
+  const rootImages: Omit<ImageFile, 'layout'>[] = [];
 
   for (const file of imageFiles) {
-    const pathParts = file.path.split("/"); // e.g. ['pics', 'landscapes', 'image.jpg']
-    if (pathParts.length <= 1) continue; // Skip files directly in root
-    
-    const fileName = pathParts.pop()!; // 'image.jpg'
-    const parentPath = pathParts.slice(1).join('/'); // 'landscapes' or ''
+    const pathParts = file.path.split('/');
+    if (pathParts.length < 2 || !pathParts[1]) continue;
 
-    const image: Omit<ImageFile, "type"> = {
+    const fileName = pathParts[pathParts.length - 1];
+    const isRootImage = pathParts.length === 2;
+
+    const image: Omit<ImageFile, 'type'> = {
       id: file.sha,
       name: fileName,
       path: file.path,
       url: getBaseImageUrl(file.path),
     };
 
-    if (parentPath) { // It's in a folder
-      if (!folders[parentPath]) {
-        folders[parentPath] = {
-          id: `${REPO_NAME}-folder-${parentPath}`,
-          type: "folder",
-          name: parentPath.split('/').pop()!,
-          path: `pics/${parentPath}`,
+    if (isRootImage) {
+      rootImages.push({
+        ...image,
+        type: 'image',
+      });
+    } else {
+      const folderPath = pathParts.slice(1, -1).join('/');
+      if (!folders[folderPath]) {
+        folders[folderPath] = {
+          id: `${REPO_NAME}-folder-${folderPath}`,
+          type: 'folder',
+          name: folderPath.split('/').pop()!,
+          path: `pics/${folderPath}`,
           images: [],
         };
       }
-      folders[parentPath].images.push(image);
-    } else { // It's directly in 'pics/'
-      rootImages.push({
-        ...image,
-        type: 'image'
-      });
+      folders[folderPath].images.push(image);
     }
   }
 
   const folderItems = Object.values(folders);
-  const allItems: (Omit<GalleryItem, 'layout'>)[] = [...rootImages, ...folderItems];
+  const allItems: (Omit<GalleryItem, 'layout'>)[] = [
+    ...rootImages,
+    ...folderItems,
+  ];
 
-  const layoutPromises = allItems.map(item => getLayoutForGalleryItem(item));
-  const layouts = await Promise.all(layoutPromises);
-  
-  const galleryItems: GalleryItem[] = allItems.map((item, index) => ({
-      ...item,
-      layout: layouts[index]
-  }));
+  if (allItems.length === 0) {
+    return [];
+  }
 
+  try {
+    const layoutResult = await determineGalleryLayout({items: allItems});
 
-  // Sort folders by path/name and images inside them by name
-  galleryItems.sort((a, b) => a.path.localeCompare(b.path));
-  galleryItems.forEach((item) => {
-    if (item.type === 'folder') {
+    const galleryItems: GalleryItem[] = layoutResult.itemsWithLayout;
+
+    galleryItems.sort((a, b) => a.path.localeCompare(b.path));
+    galleryItems.forEach(item => {
+      if (item.type === 'folder') {
         item.images.sort((a, b) => a.name.localeCompare(b.name));
-    }
-  });
+      }
+    });
 
-  return galleryItems;
+    return galleryItems;
+  } catch (error) {
+    console.error('Error applying AI layout, returning items without layout:', error);
+    // Fallback to default layouts if AI fails
+    return allItems.map(item => ({
+      ...item,
+      layout: item.type === 'folder' ? 'horizontal' : 'vertical',
+    })) as GalleryItem[];
+  }
 }
