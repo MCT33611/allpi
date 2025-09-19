@@ -1,3 +1,53 @@
+
 {
-  "placeholderImages": []
+  "placeholderImages": [
+    {
+      "id": "1",
+      "description": "A person sitting on a rock looking at a mountain range.",
+      "imageUrl": "https://picsum.photos/seed/1/800/600",
+      "imageHint": "mountain landscape"
+    },
+    {
+      "id": "2",
+      "description": "A view of a city skyline at night from across the water.",
+      "imageUrl": "https://picsum.photos/seed/2/800/600",
+      "imageHint": "city night"
+    },
+    {
+      "id": "3",
+      "description": "A close-up of a colorful tropical bird.",
+      "imageUrl": "https://picsum.photos/seed/3/800/600",
+      "imageHint": "tropical bird"
+    },
+    {
+      "id": "4",
+      "description": "A plate of delicious-looking pasta.",
+      "imageUrl": "https://picsum.photos/seed/4/800/600",
+      "imageHint": "food pasta"
+    },
+    {
+      "id": "5",
+      "description": "A sandy beach with waves crashing on the shore.",
+      "imageUrl": "https://picsum.photos/seed/5/800/600",
+      "imageHint": "beach ocean"
+    },
+    {
+      "id": "6",
+      "description": "A dense forest with tall trees and sunlight filtering through.",
+      "imageUrl": "https://picsum.photos/seed/6/800/600",
+      "imageHint": "forest trees"
+    },
+    {
+      "id": "7",
+      "description": "Abstract architectural details of a modern building.",
+      "imageUrl": "https://picsum.photos/seed/7/800/600",
+      "imageHint": "modern architecture"
+    },
+    {
+      "id": "8",
+      "description": "A classic car parked on a city street.",
+      "imageUrl": "https://picsum.photos/seed/8/800/600",
+      "imageHint": "classic car"
+    }
+  ]
 }

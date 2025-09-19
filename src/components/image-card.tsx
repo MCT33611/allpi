@@ -30,7 +30,8 @@ export default function ImageCard({
       <Image
         src={image.url}
         alt={image.name}
-        fill
+        width={800}
+        height={600}
         sizes="(max-width: 768px) 80vw, (max-width: 1200px) 50vw, 33vw"
         className={cn(
           "object-cover transition-transform duration-300 ease-in-out group-hover:scale-105",
