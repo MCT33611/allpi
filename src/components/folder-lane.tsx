@@ -2,7 +2,6 @@
 "use client";
 import type { Folder } from "@/lib/gallery";
 import ImageCard from "./image-card";
-import { cn } from "@/lib/utils";
 
 type FolderLaneProps = {
   folder: Folder;
@@ -25,7 +24,7 @@ export default function FolderLane({
         data-id={folderId}
         className="w-full h-full flex flex-col gap-4 p-1 border-2 border-accent/50 rounded-lg bg-background/30"
       >
-        <h2 className="text-xl font-semibold text-accent text-center">
+        <h2 className="text-xl font-semibold text-accent text-center shrink-0">
           {folder.name}
         </h2>
         <div className="flex-1 flex flex-col gap-4 overflow-y-auto pr-2 snap-y snap-mandatory min-h-0">
