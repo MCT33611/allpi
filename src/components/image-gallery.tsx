@@ -203,6 +203,16 @@ export default function ImageGallery({ items }: { items: GalleryItem[] | null })
             setScrollDirection={handleSetScrollDirection}
           />
         </div>
+        <div className="absolute bottom-0 left-0 w-full h-1 overflow-hidden">
+          <div
+            className={cn(
+              "w-full h-full bg-accent/20",
+              scrollDirection !== "horizontal" && "hidden"
+            )}
+          >
+            <div className="h-full bg-accent animate-youtube-loader"></div>
+          </div>
+        </div>
       </header>
 
       {scrollDirection === "vertical" ? (
