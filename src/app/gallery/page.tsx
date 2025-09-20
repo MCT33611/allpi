@@ -2,6 +2,7 @@ import { getGalleryItems } from "@/lib/gallery";
 import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Folder } from "lucide-react";
+import FolderLane from "@/components/folder-lane";
 
 export const revalidate = 0;
 
@@ -11,28 +12,31 @@ export default async function GalleryPage() {
   return (
     <main className="container mx-auto px-4 py-24">
       <h1 className="text-3xl font-bold mb-8 text-primary">Folders</h1>
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+      <div className="flex flex-col gap-12">
         {folders?.map((folder) => {
-          if (folder.type === 'folder') {
+          if (folder.type === 'folder' && folder.images.length > 0) {
             return (
-              <Link href={`/gallery/${folder.name}`} key={folder.id}>
-                <Card className="bg-card hover:bg-accent/10 transition-colors border-accent/20 hover:border-accent/50">
-                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">
-                      {folder.name}
-                    </CardTitle>
-                    <Folder className="h-4 w-4 text-muted-foreground" />
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-2xl font-bold">
-                      {folder.images.length}
-                    </div>
-                    <p className="text-xs text-muted-foreground">
-                      {folder.images.length === 1 ? 'image' : 'images'}
-                    </p>
-                  </CardContent>
-                </Card>
-              </Link>
+              <div key={folder.id}>
+                 <Link href={`/gallery/${folder.name}`}>
+                    <h2 className="text-2xl font-bold text-accent mb-4 hover:underline">
+                      {folder.name} ({folder.images.length} {folder.images.length === 1 ? 'image' : 'images'})
+                    </h2>
+                 </Link>
+                <Link href={`/gallery/${folder.name}`}>
+                  <div className="w-full max-w-5xl mx-auto">
+                      <div className="flex gap-4 overflow-x-auto hide-scrollbar snap-x snap-mandatory">
+                        {folder.images.map((image) => (
+                          <div
+                            key={image.id}
+                            className="w-[80vw] md:w-[400px] aspect-video flex-shrink-0 snap-center rounded-lg overflow-hidden border-2 border-accent/20"
+                          >
+                             <img src={image.url} alt={image.name} className="w-full h-full object-cover" />
+                          </div>
+                        ))}
+                      </div>
+                  </div>
+                </Link>
+              </div>
             );
           }
           return null;
