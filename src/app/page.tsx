@@ -3,7 +3,6 @@ import ImageGallery from '@/components/image-gallery';
 import { getGalleryItems } from '@/lib/gallery';
 import { Suspense } from 'react';
 import Loading from './loading';
-import Header from '@/components/header';
 
 
 export const revalidate = 0;
@@ -14,7 +13,6 @@ export default async function Home() {
 
   return (
     <Suspense fallback={<Loading />}>
-      <Header />
       <ImageGallery items={rootImages} />
     </Suspense>
   );

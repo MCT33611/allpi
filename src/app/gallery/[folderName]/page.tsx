@@ -3,7 +3,6 @@ import ImageGallery from "@/components/image-gallery";
 import { getGalleryItems } from "@/lib/gallery";
 import { Suspense } from "react";
 import Loading from "@/app/loading";
-import Header from "@/components/header";
 
 export const revalidate = 0;
 
@@ -19,7 +18,6 @@ export default async function FolderPage({ params }: FolderPageProps) {
 
   return (
     <Suspense fallback={<Loading />}>
-      <Header />
       <ImageGallery items={folderContents} title={folderName} />
     </Suspense>
   );

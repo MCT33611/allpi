@@ -15,6 +15,7 @@ import {
   type CarouselApi,
 } from "@/components/ui/carousel";
 import Loading from "@/app/loading";
+import Header from "@/components/header";
 
 type ScrollDirection = "vertical" | "horizontal";
 
@@ -179,7 +180,8 @@ export default function ImageGallery({ items, title }: ImageGalleryProps) {
 
   return (
     <main className="bg-background text-primary h-screen w-screen overflow-hidden flex flex-col">
-       <div className={cn("absolute top-16 left-0 w-full z-40 flex justify-center items-center p-4 transition-transform duration-300", isHeaderVisible ? 'translate-y-0' : '-translate-y-32')}>
+       <Header isVisible={isHeaderVisible} />
+       <div className={cn("absolute top-20 left-0 w-full z-40 flex justify-center items-center p-4 transition-transform duration-300", isHeaderVisible ? 'translate-y-0' : '-translate-y-40')}>
         <div className="flex items-center gap-4">
           {title && <h1 className="text-2xl font-bold text-primary tracking-widest">{title}</h1>}
           <ScrollToggle
