@@ -54,13 +54,13 @@ export default function FolderLane({
         {folder.name}
       </h2>
       <div className="w-full overflow-x-auto snap-x snap-mandatory hide-scrollbar">
-        <div className="flex w-max">
+        <div className="flex w-full">
           {folder.images.map((image) => (
             <div
               key={image.id}
               ref={(node) => setRef(image.id, node)}
               data-id={image.id}
-              className="w-screen md:w-[calc(1024px-2rem)] h-auto aspect-[4/3] flex-shrink-0 snap-start px-2"
+              className="w-full h-auto aspect-[4/3] flex-shrink-0 snap-center"
             >
               <ImageCard image={image} fit="contain" />
             </div>
