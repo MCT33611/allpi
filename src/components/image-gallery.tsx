@@ -20,6 +20,7 @@ type ScrollDirection = "vertical" | "horizontal";
 
 export default function ImageGallery({ items }: { items: GalleryItem[] | null }) {
   const [isClient, setIsClient] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [scrollDirection, setScrollDirection] = useState<ScrollDirection>("vertical");
   const galleryRef = useRef<HTMLDivElement>(null);
   const searchParams = useSearchParams();
@@ -53,10 +54,13 @@ export default function ImageGallery({ items }: { items: GalleryItem[] | null })
 
   useEffect(() => {
     setIsClient(true);
-  }, []);
+    if (items) {
+      setIsLoading(false);
+    }
+  }, [items]);
 
   useEffect(() => {
-    if (!isClient || !items?.length) return;
+    if (!isClient || !items?.length || isLoading) return;
 
     const startImageId = searchParams.get("imageId") || localStorage.getItem("lastSeenImageId");
 
@@ -81,11 +85,11 @@ export default function ImageGallery({ items }: { items: GalleryItem[] | null })
             setTimeout(tryScroll, 100);
         }
     }
-  }, [searchParams, items, carouselApi, scrollDirection, isClient]);
+  }, [searchParams, items, carouselApi, scrollDirection, isClient, isLoading]);
 
 
   useEffect(() => {
-    if (!carouselApi || !isClient || !imagesOnly) return;
+    if (!carouselApi || !isClient || !imagesOnly || isLoading) return;
 
     const onSelect = (api: CarouselApi) => {
       const slideIndex = api.selectedScrollSnap();
@@ -101,11 +105,11 @@ export default function ImageGallery({ items }: { items: GalleryItem[] | null })
     return () => {
       carouselApi.off("select", onSelect);
     };
-  }, [carouselApi, imagesOnly, isClient]);
+  }, [carouselApi, imagesOnly, isClient, isLoading]);
 
 
   useEffect(() => {
-    if (scrollDirection !== 'vertical' || !isClient || !items) return;
+    if (scrollDirection !== 'vertical' || !isClient || !items || isLoading) return;
 
     const observer = new IntersectionObserver(
       (entries) => {
@@ -132,7 +136,7 @@ export default function ImageGallery({ items }: { items: GalleryItem[] | null })
     return () => {
       elements.forEach((el) => observer.unobserve(el));
     };
-  }, [items, scrollDirection, isClient]);
+  }, [items, scrollDirection, isClient, isLoading]);
 
 
   useEffect(() => {
@@ -189,7 +193,7 @@ export default function ImageGallery({ items }: { items: GalleryItem[] | null })
     }
   }, []);
 
-  if (!isClient || !items) {
+  if (!isClient || isLoading) {
     return <Loading />;
   }
 
@@ -212,7 +216,7 @@ export default function ImageGallery({ items }: { items: GalleryItem[] | null })
           <div
             className={cn(
               "w-full h-full bg-accent/20",
-              scrollDirection !== "horizontal" && "hidden"
+              !isLoading && "hidden"
             )}
           >
             <div className="h-full bg-accent animate-youtube-loader"></div>
@@ -254,11 +258,11 @@ export default function ImageGallery({ items }: { items: GalleryItem[] | null })
           <div className="h-16 w-full flex-shrink-0" />
         </div>
       ) : (
-        <div ref={galleryRef} className="w-full h-full pt-24 flex items-center">
-            <Carousel setApi={setCarouselApi} className="w-full h-full max-w-6xl mx-auto min-h-[80vh]">
-                <CarouselContent className="h-full">
+        <div ref={galleryRef} className="w-full h-full pt-24 pb-12">
+            <Carousel setApi={setCarouselApi} className="w-full h-full max-w-6xl mx-auto">
+                <CarouselContent className="h-full p-4">
                 {imagesOnly?.map((item, index) => (
-                    <CarouselItem key={item.id} className="relative flex items-center justify-center w-full h-[80vh]">
+                    <CarouselItem key={item.id} className="h-full w-full relative">
                        <ImageCard image={item} className="w-full h-full" priority={index < 3} fit="contain" />
                     </CarouselItem>
                 ))}
