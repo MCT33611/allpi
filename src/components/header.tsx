@@ -33,8 +33,9 @@ export default function Header({ isVisible = true, children }: { isVisible?: boo
         </Link>
         
         <div className="flex items-center gap-4">
-          {children}
-          {!children && (
+          {children ? (
+            children
+          ) : (
             <nav className="flex items-center gap-1 p-1 rounded-full border border-accent/50 bg-background/50 backdrop-blur-sm">
               <TooltipProvider>
                 {navItems.map(({ href, label, icon: Icon }) => (
