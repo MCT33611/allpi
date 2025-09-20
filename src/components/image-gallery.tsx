@@ -15,7 +15,7 @@ import {
   type CarouselApi,
 } from "@/components/ui/carousel";
 import Loading from "@/app/loading";
-import Header from "@/components/header";
+import Header from "./header";
 
 type ScrollDirection = "vertical" | "horizontal";
 
@@ -54,7 +54,7 @@ export default function ImageGallery({ items, title }: ImageGalleryProps) {
     if (!galleryRef.current) return;
     const currentScrollY = galleryRef.current.scrollTop;
 
-    if (Math.abs(currentScrollY - lastScrollY.current) < 20) return;
+    if (Math.abs(currentScrollY - lastScrollY.current) < 50) return;
 
     if (currentScrollY > lastScrollY.current && currentScrollY > 100) {
       setIsHeaderVisible(false); // Scrolling down
