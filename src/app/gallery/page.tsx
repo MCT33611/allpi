@@ -11,19 +11,19 @@ export default async function GalleryPage() {
 
   return (
     <main className="container mx-auto px-4 py-24">
-      <h1 className="text-3xl font-bold mb-8 text-primary">Folders</h1>
+      <h1 className="text-3xl font-bold mb-8 text-primary">Gallery</h1>
       <div className="flex flex-col gap-12">
         {folders?.map((folder) => {
           if (folder.type === 'folder' && folder.images.length > 0) {
             return (
-              <div key={folder.id}>
+              <div key={folder.id} className="w-full max-w-5xl mx-auto">
                  <Link href={`/gallery/${folder.name}`}>
                     <h2 className="text-2xl font-bold text-accent mb-4 hover:underline">
                       {folder.name} ({folder.images.length} {folder.images.length === 1 ? 'image' : 'images'})
                     </h2>
                  </Link>
                 <Link href={`/gallery/${folder.name}`}>
-                  <div className="w-full max-w-5xl mx-auto overflow-x-auto hide-scrollbar snap-x snap-mandatory">
+                  <div className="w-full overflow-x-auto hide-scrollbar snap-x snap-mandatory">
                       <div className="flex w-max gap-4">
                         {folder.images.map((image) => (
                           <div
