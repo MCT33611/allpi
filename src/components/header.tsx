@@ -32,40 +32,39 @@ export default function Header({ isVisible = true, children }: { isVisible?: boo
             <h1 className="text-2xl font-bold text-primary tracking-widest hidden sm:block">ALLPI</h1>
         </Link>
         
-        {children ? (
-          <div className="flex items-center gap-4">
-            {children}
-          </div>
-        ) : (
-          <nav className="flex items-center gap-1 p-1 rounded-full border border-accent/50 bg-background/50 backdrop-blur-sm">
-            <TooltipProvider>
-              {navItems.map(({ href, label, icon: Icon }) => (
-                <Tooltip key={href}>
-                  <TooltipTrigger asChild>
-                    <Link href={href}>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className={cn(
-                          "rounded-full h-8 w-8 transition-colors",
-                          pathname === href
-                            ? "bg-accent text-background"
-                            : "hover:bg-accent/20"
-                        )}
-                        aria-label={label}
-                      >
-                        <Icon className="w-5 h-5" />
-                      </Button>
-                    </Link>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>{label}</p>
-                  </TooltipContent>
-                </Tooltip>
-              ))}
-            </TooltipProvider>
-          </nav>
-        )}
+        <div className="flex items-center gap-4">
+          {children}
+          {!children && (
+            <nav className="flex items-center gap-1 p-1 rounded-full border border-accent/50 bg-background/50 backdrop-blur-sm">
+              <TooltipProvider>
+                {navItems.map(({ href, label, icon: Icon }) => (
+                  <Tooltip key={href}>
+                    <TooltipTrigger asChild>
+                      <Link href={href}>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className={cn(
+                            "rounded-full h-8 w-8 transition-colors",
+                            pathname === href
+                              ? "bg-accent text-background"
+                              : "hover:bg-accent/20"
+                          )}
+                          aria-label={label}
+                        >
+                          <Icon className="w-5 h-5" />
+                        </Button>
+                      </Link>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>{label}</p>
+                    </TooltipContent>
+                  </Tooltip>
+                ))}
+              </TooltipProvider>
+            </nav>
+          )}
+        </div>
       </div>
     </header>
   );
