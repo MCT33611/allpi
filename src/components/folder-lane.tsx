@@ -44,7 +44,7 @@ export default function FolderLane({
     );
   }
 
-  // Default is the horizontal folder view on the main vertical page
+  // Default is the single-image horizontal folder view on the main vertical page
   return (
     <div
       ref={(node) => setRef(folderId, node)}
@@ -54,22 +54,23 @@ export default function FolderLane({
       <h2 className="text-xl font-semibold text-accent pl-4 md:pl-0">
         {folder.name}
       </h2>
-      <div className="flex gap-4 overflow-x-auto pb-4 -mb-4 snap-x snap-mandatory">
-        {folder.images.map((image, index) => (
+      <div className="flex overflow-x-auto snap-x snap-mandatory hide-scrollbar">
+        {folder.images.map((image) => (
           <div
             key={image.id}
             ref={(node) => setRef(image.id, node)}
             data-id={image.id}
-            className={cn(
-                "w-[80vw] sm:w-[60vw] md:w-[40vw] lg:w-[30vw] h-auto aspect-[4/3] flex-shrink-0 snap-start",
-                index === 0 && 'ml-4 md:ml-0'
-            )}
+            className="w-full h-auto aspect-[4/3] flex-shrink-0 snap-start"
           >
-            <ImageCard image={image} fit="cover"/>
+            <ImageCard image={image} fit="contain"/>
           </div>
         ))}
-        <div className="flex-shrink-0 w-4 md:w-0" />
       </div>
     </div>
   );
 }
+
+// Helper to hide scrollbars, you might need a CSS utility for this
+// e.g., in your globals.css:
+// .hide-scrollbar::-webkit-scrollbar { display: none; }
+// .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
