@@ -23,14 +23,14 @@ export default async function GalleryPage() {
                     </h2>
                  </Link>
                 <Link href={`/gallery/${folder.name}`}>
-                  <div className="w-full max-w-5xl mx-auto">
-                      <div className="flex gap-4 overflow-x-auto hide-scrollbar snap-x snap-mandatory">
+                  <div className="w-full max-w-5xl mx-auto overflow-x-auto hide-scrollbar snap-x snap-mandatory">
+                      <div className="flex w-max gap-4">
                         {folder.images.map((image) => (
                           <div
                             key={image.id}
-                            className="w-[80vw] md:w-[400px] aspect-video flex-shrink-0 snap-center rounded-lg overflow-hidden border-2 border-accent/20"
+                            className="w-screen max-w-5xl aspect-[4/3] flex-shrink-0 snap-center rounded-lg overflow-hidden border-2 border-accent/20"
                           >
-                             <img src={image.url} alt={image.name} className="w-full h-full object-cover" />
+                             <img src={image.url} alt={image.name} className="w-full h-full object-contain" />
                           </div>
                         ))}
                       </div>
