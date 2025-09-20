@@ -2,7 +2,6 @@
 'use server';
 import {z} from 'zod';
 import {determineGalleryLayout} from '@/ai/flows/determine-gallery-layout';
-import type {DetermineGalleryLayoutInput} from '@/ai/flows/determine-gallery-layout';
 
 const REPO_OWNER = 'MCT33611';
 const REPO_NAME = 'allpi';
@@ -39,6 +38,15 @@ export type Folder = {
 export type GalleryItem =
   | (ImageFile & {layout: 'vertical' | 'horizontal'})
   | Folder;
+
+type DetermineGalleryLayoutInput = {
+    items: {
+        id: string;
+        type: "image" | "folder";
+        name: string;
+        path: string;
+    }[];
+}
 
 // ---------- Helpers ----------
 async function getRepoTree(): Promise<z.infer<typeof GithubTreeFileSchema>[]> {

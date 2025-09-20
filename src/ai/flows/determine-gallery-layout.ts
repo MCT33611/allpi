@@ -23,7 +23,7 @@ const DetermineGalleryLayoutInputSchema = z.object({
     .array(GalleryItemInputSchema)
     .describe('An array of gallery items to be processed.'),
 });
-export type DetermineGalleryLayoutInput = z.infer<
+type DetermineGalleryLayoutInput = z.infer<
   typeof DetermineGalleryLayoutInputSchema
 >;
 
@@ -39,7 +39,7 @@ const DetermineGalleryLayoutOutputSchema = z.object({
     .array(GalleryItemLayoutSchema)
     .describe('An array of items with their determined layout.'),
 });
-export type DetermineGalleryLayoutOutput = z.infer<
+type DetermineGalleryLayoutOutput = z.infer<
   typeof DetermineGalleryLayoutOutputSchema
 >;
 
@@ -63,9 +63,9 @@ const galleryLayoutPrompt = ai.definePrompt({
     - A single image should always have a 'vertical' layout.
     - A folder containing images should generally have a 'horizontal' layout to encourage browsing.
 
-    Here are the items:
+    Here is the list of items:
     {{#each items}}
-    - ID: {{id}}, Type: {{type}}, Name: {{name}}, Path: {{path}}
+    - ID: {{this.id}}, Type: {{this.type}}, Name: {{this.name}}, Path: {{this.path}}
     {{/each}}
 
     Please provide the layout for each item.
