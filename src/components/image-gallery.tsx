@@ -239,8 +239,8 @@ export default function ImageGallery({ items }: { items: GalleryItem[] | null })
           <div className="h-16 w-full flex-shrink-0" />
         </div>
       ) : (
-        <div ref={galleryRef} className="flex-1 w-full h-full pt-20 flex items-center justify-center">
-            <Carousel setApi={setCarouselApi} className="w-full h-full max-w-6xl">
+        <div ref={galleryRef} className="flex-1 w-full h-full flex flex-col pt-20">
+            <Carousel setApi={setCarouselApi} className="w-full h-full max-w-6xl mx-auto">
                 <CarouselContent className="h-full p-4" data-embla-container>
                 {imagesOnly?.map((item, index) => (
                     <CarouselItem key={item.id} className="h-full w-full relative">
