@@ -91,40 +91,45 @@ async function processRepoTree(): Promise<{ rootImages: ImageFile[], folders: Fo
         isImageFile(file.path)
     );
 
-    const folderData: {[key: string]: Omit<Folder, 'images'> & {images: ImageFile[]}} = {};
+    const folderData: {[key: string]: Omit<Folder, 'images'> & {images: Omit<ImageFile, 'type'>[]}} = {};
     const rootImages: ImageFile[] = [];
 
     for (const file of imageFiles) {
-      const pathParts = file.path.split('/');
-      if (pathParts.length < 2 || !pathParts[1]) continue;
-
-      const fileName = pathParts[pathParts.length - 1];
-      const isRootImage = pathParts.length === 2;
-
-      const image: ImageFile = {
-        id: file.sha,
-        type: 'image',
-        name: fileName,
-        path: file.path,
-        url: getBaseImageUrl(file.path),
-      };
-
-      if (isRootImage) {
-        rootImages.push(image);
-      } else {
-        const folderName = pathParts[1];
-        const folderPath = `pics/${folderName}`;
-        if (!folderData[folderPath]) {
-          folderData[folderPath] = {
-            id: `${REPO_NAME}-folder-${folderName}`,
-            type: 'folder',
-            name: folderName,
-            path: folderPath,
-            images: [],
-          };
+        const pathParts = file.path.split('/');
+        // pathParts would be ['pics', 'image.jpg'] for a root image
+        // or ['pics', 'folderName', 'image.jpg'] for a folder image
+        if (pathParts.length < 2 || pathParts[0] !== 'pics') continue;
+  
+        const fileName = pathParts[pathParts.length - 1];
+        
+        // Check if the image is directly inside 'pics' folder
+        const isRootImage = pathParts.length === 2;
+  
+        const image: Omit<ImageFile, 'type'> = {
+          id: file.sha,
+          name: fileName,
+          path: file.path,
+          url: getBaseImageUrl(file.path),
+        };
+  
+        if (isRootImage) {
+          rootImages.push({ ...image, type: 'image' });
+        } else if (pathParts.length > 2) {
+            const folderName = pathParts[1];
+            if (!folderName) continue;
+            
+            const folderPath = `pics/${folderName}`;
+            if (!folderData[folderPath]) {
+              folderData[folderPath] = {
+                id: `${REPO_NAME}-folder-${folderName}`, // Generate a unique ID for the folder
+                type: 'folder',
+                name: folderName,
+                path: folderPath,
+                images: [],
+              };
+            }
+            folderData[folderPath].images.push(image);
         }
-        folderData[folderPath].images.push(image);
-      }
     }
     
     const folders: Folder[] = Object.values(folderData).map(f => ({
@@ -150,7 +155,10 @@ export async function getGalleryItems(options: GetGalleryItemsOptions = { type: 
             return folders;
         case 'folder':
             const foundFolder = folders.find(f => f.path === options.path);
-            return foundFolder ? foundFolder.images : [];
+            if (foundFolder) {
+                return foundFolder.images.map(img => ({ ...img, type: 'image' }));
+            }
+            return [];
         case 'all':
         default:
             const allItems: GalleryItem[] = [...rootImages, ...folders];
