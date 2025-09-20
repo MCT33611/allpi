@@ -259,15 +259,25 @@ export default function ImageGallery({ items }: { items: GalleryItem[] | null })
         </div>
       ) : (
         <div ref={galleryRef} className="w-full h-full pt-24 pb-12">
-            <Carousel setApi={setCarouselApi} className="w-full h-full max-w-6xl mx-auto">
-                <CarouselContent className="h-full p-4">
-                {imagesOnly?.map((item, index) => (
-                    <CarouselItem key={item.id} className="h-full w-full relative">
-                       <ImageCard image={item} className="w-full h-full" priority={index < 3} fit="contain" />
-                    </CarouselItem>
-                ))}
-                </CarouselContent>
-            </Carousel>
+          <Carousel setApi={setCarouselApi} className="w-full h-full max-w-6xl mx-auto">
+            <CarouselContent className="h-full p-4">
+              {imagesOnly?.map((item, index) => (
+                <CarouselItem
+                  key={item.id}
+                  className="h-full w-full flex items-center justify-center"
+                >
+                  <div className="relative w-full h-[80vh]">
+                    <ImageCard
+                      image={item}
+                      className="w-full h-full"
+                      priority={index < 3}
+                      fit="contain"
+                    />
+                  </div>
+                </CarouselItem>
+              ))}
+            </CarouselContent>
+          </Carousel>
         </div>
       )}
     </main>
