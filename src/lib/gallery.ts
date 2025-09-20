@@ -47,6 +47,7 @@ async function getRepoTree(): Promise<z.infer<typeof GithubTreeFileSchema>[]> {
   const headers: HeadersInit = {
     Accept: 'application/vnd.github.v3+json',
     'X-GitHub-Api-Version': '2022-11-28',
+    Authorization: `token ${process.env.GITHUB_TOKEN}`,
   };
   
   try {

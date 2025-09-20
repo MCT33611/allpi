@@ -1,7 +1,8 @@
 import { getGalleryItems } from "@/lib/gallery";
 import Link from "next/link";
-import { Folder, Images } from "lucide-react";
+import { Images } from "lucide-react";
 import Header from "@/components/header";
+import ImageCard from "@/components/image-card";
 
 export const revalidate = 0;
 
@@ -29,9 +30,9 @@ export default async function GalleryPage() {
                           {folder.images.map((image, index) => (
                             <div
                               key={image.id}
-                              className="w-screen max-w-5xl aspect-[4/3] flex-shrink-0 snap-center rounded-lg overflow-hidden border-2 border-accent/20"
+                              className="w-[calc(100vw-2rem)] max-w-5xl aspect-[4/3] flex-shrink-0 snap-center"
                             >
-                              <img src={image.url} alt={image.name} className="w-full h-full object-contain" />
+                              <ImageCard image={image} fit="contain" className="h-full w-full" />
                               {index === 0 && (
                                 <div className="absolute top-0 right-0 w-0 h-0 border-t-[60px] border-t-accent/80 border-l-[60px] border-l-transparent group-hover:border-t-accent transition-colors">
                                   <div className="absolute -top-14 right-1 text-accent-foreground flex flex-col items-center">

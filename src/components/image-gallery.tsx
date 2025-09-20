@@ -54,6 +54,7 @@ export default function ImageGallery({ items, title }: ImageGalleryProps) {
     if (!galleryRef.current) return;
     const currentScrollY = galleryRef.current.scrollTop;
 
+    // Only update if scrolling more than a threshold to avoid jitter
     if (Math.abs(currentScrollY - lastScrollY.current) < 50) return;
 
     if (currentScrollY > lastScrollY.current && currentScrollY > 100) {
@@ -67,9 +68,10 @@ export default function ImageGallery({ items, title }: ImageGalleryProps) {
   useEffect(() => {
     const galleryElement = galleryRef.current;
     if (scrollDirection === 'vertical') {
-      galleryElement?.addEventListener('scroll', handleScroll);
+      galleryElement?.addEventListener('scroll', handleScroll, { passive: true });
     } else {
-      setIsHeaderVisible(true); // Always show header in horizontal mode
+      // In horizontal mode, header should always be visible.
+      setIsHeaderVisible(true);
     }
     return () => {
       galleryElement?.removeEventListener('scroll', handleScroll);
