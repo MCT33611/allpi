@@ -32,7 +32,12 @@ export default function ImageGallery({ items }: { items: GalleryItem[] | null })
   const itemRefs = useRef(new Map<string, HTMLElement>());
   const carouselItemRefs = useRef(new Map<string, number>());
   
-  const imagesOnly = items?.filter(item => item.type === 'image');
+  const imagesOnly = items?.flatMap(item => {
+    if (item.type === "image") return [item];
+    if (item.type === "folder") return item.images;
+    return [];
+  });
+  
   imagesOnly?.forEach((item, index) => {
     carouselItemRefs.current.set(item.id, index);
   });
@@ -249,11 +254,11 @@ export default function ImageGallery({ items }: { items: GalleryItem[] | null })
           <div className="h-16 w-full flex-shrink-0" />
         </div>
       ) : (
-        <div ref={galleryRef} className="w-full h-full pt-24">
-            <Carousel setApi={setCarouselApi} className="w-full h-full max-w-6xl mx-auto">
+        <div ref={galleryRef} className="w-full h-full pt-24 flex items-center">
+            <Carousel setApi={setCarouselApi} className="w-full h-full max-w-6xl mx-auto min-h-[80vh]">
                 <CarouselContent className="h-full">
                 {imagesOnly?.map((item, index) => (
-                    <CarouselItem key={item.id} className="h-full w-full relative">
+                    <CarouselItem key={item.id} className="relative flex items-center justify-center w-full h-[80vh]">
                        <ImageCard image={item} className="w-full h-full" priority={index < 3} fit="contain" />
                     </CarouselItem>
                 ))}
