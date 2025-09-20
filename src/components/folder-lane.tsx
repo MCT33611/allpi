@@ -27,7 +27,7 @@ export default function FolderLane({
         <h2 className="text-xl font-semibold text-accent text-center shrink-0">
           {folder.name}
         </h2>
-        <div className="flex-1 flex flex-col gap-4 overflow-y-auto pr-2 snap-y snap-mandatory min-h-0">
+        <div className="flex-1 flex flex-col gap-4 overflow-y-auto pr-2 snap-y snap-mandatory min-h-0 hide-scrollbar">
           {folder.images.map((image) => (
             <div
               key={image.id}
