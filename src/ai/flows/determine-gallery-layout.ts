@@ -59,16 +59,19 @@ const galleryLayoutPrompt = ai.definePrompt({
   prompt: `You are an expert in UI design, specializing in photo galleries.
     Based on the provided list of items (images and folders), determine the optimal layout for each.
 
-    Rules:
-    - A single image should always have a 'vertical' layout.
-    - A folder containing images should generally have a 'horizontal' layout to encourage browsing.
+    Your task is to analyze the following list of items and assign a layout of either 'horizontal' or 'vertical' to each one.
 
-    Here is the list of items:
+    Follow these rules strictly:
+    1.  If the item's type is 'image', you MUST assign it a 'vertical' layout.
+    2.  If the item's type is 'folder', you MUST assign it a 'horizontal' layout.
+    3.  You must provide a layout for every single item in the input array. Do not skip any.
+
+    Here is the list of items to process:
     {{#each items}}
     - ID: {{this.id}}, Type: {{this.type}}, Name: {{this.name}}, Path: {{this.path}}
     {{/each}}
 
-    Please provide the layout for each item.
+    Please provide the layout for each item in the specified JSON output format.
     `,
 });
 
