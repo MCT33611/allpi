@@ -5,12 +5,13 @@ import Loading from './loading';
 
 export const revalidate = 0;
 
+// This is the "Pics" page
 export default async function Home() {
-  const galleryItems = await getGalleryItems();
+  const rootImages = await getGalleryItems({ type: 'images' });
 
   return (
     <Suspense fallback={<Loading />}>
-      <ImageGallery items={galleryItems} />
+      <ImageGallery items={rootImages} />
     </Suspense>
   );
 }

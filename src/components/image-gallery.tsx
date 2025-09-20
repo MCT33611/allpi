@@ -2,7 +2,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
-import type { GalleryItem } from "@/lib/gallery";
+import type { GalleryItem, ImageFile } from "@/lib/gallery";
 import ScrollToggle from "./scroll-toggle";
 import { cn } from "@/lib/utils";
 import ImageCard from "./image-card";
@@ -18,49 +18,34 @@ import Loading from "@/app/loading";
 
 type ScrollDirection = "vertical" | "horizontal";
 
-export default function ImageGallery({ items }: { items: GalleryItem[] | null }) {
+type ImageGalleryProps = {
+  items: GalleryItem[] | null;
+  title?: string;
+}
+
+export default function ImageGallery({ items, title }: ImageGalleryProps) {
   const [isClient, setIsClient] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
   const [scrollDirection, setScrollDirection] = useState<ScrollDirection>("vertical");
   const galleryRef = useRef<HTMLDivElement>(null);
   const searchParams = useSearchParams();
 
   const [carouselApi, setCarouselApi] = useState<CarouselApi>();
-  const [headerVisible, setHeaderVisible] = useState(true);
-  const lastScrollY = useRef(0);
-  const lastScrollX = useRef(0);
 
   const itemRefs = useRef(new Map<string, HTMLElement>());
   const carouselItemRefs = useRef(new Map<string, number>());
   
-  const imagesOnly = items?.flatMap(item => {
-    if (item.type === "image") return [item];
-    if (item.type === "folder") return item.images;
-    return [];
-  });
+  const imagesOnly: ImageFile[] = items?.filter(item => item.type === 'image') as ImageFile[] || [];
   
   imagesOnly?.forEach((item, index) => {
     carouselItemRefs.current.set(item.id, index);
   });
-
-  items?.forEach((item, index) => {
-    if(item.type === 'folder') {
-      carouselItemRefs.current.set(item.id, index); // for vertical
-      item.images.forEach(img => {
-        carouselItemRefs.current.set(img.id, index); // for vertical
-      })
-    }
-  });
-
+  
   useEffect(() => {
     setIsClient(true);
-    if (items) {
-      setIsLoading(false);
-    }
-  }, [items]);
+  }, []);
 
   useEffect(() => {
-    if (!isClient || !items?.length || isLoading) return;
+    if (!isClient || !items?.length) return;
 
     const startImageId = searchParams.get("imageId") || localStorage.getItem("lastSeenImageId");
 
@@ -85,11 +70,11 @@ export default function ImageGallery({ items }: { items: GalleryItem[] | null })
             setTimeout(tryScroll, 100);
         }
     }
-  }, [searchParams, items, carouselApi, scrollDirection, isClient, isLoading]);
+  }, [searchParams, items, carouselApi, scrollDirection, isClient]);
 
 
   useEffect(() => {
-    if (!carouselApi || !isClient || !imagesOnly || isLoading) return;
+    if (!carouselApi || !isClient || !imagesOnly) return;
 
     const onSelect = (api: CarouselApi) => {
       const slideIndex = api.selectedScrollSnap();
@@ -105,11 +90,11 @@ export default function ImageGallery({ items }: { items: GalleryItem[] | null })
     return () => {
       carouselApi.off("select", onSelect);
     };
-  }, [carouselApi, imagesOnly, isClient, isLoading]);
+  }, [carouselApi, imagesOnly, isClient]);
 
 
   useEffect(() => {
-    if (scrollDirection !== 'vertical' || !isClient || !items || isLoading) return;
+    if (scrollDirection !== 'vertical' || !isClient || !items) return;
 
     const observer = new IntersectionObserver(
       (entries) => {
@@ -136,49 +121,7 @@ export default function ImageGallery({ items }: { items: GalleryItem[] | null })
     return () => {
       elements.forEach((el) => observer.unobserve(el));
     };
-  }, [items, scrollDirection, isClient, isLoading]);
-
-
-  useEffect(() => {
-    if (!isClient) return;
-    const handleScroll = () => {
-      const container = galleryRef.current;
-      if (!container) return;
-
-      if (scrollDirection === 'vertical') {
-        const currentScrollY = container.scrollTop;
-        if (currentScrollY > lastScrollY.current && currentScrollY > 80) {
-          setHeaderVisible(false);
-        } else {
-          setHeaderVisible(true);
-        }
-        lastScrollY.current = currentScrollY;
-      } else {
-          const carouselContainer = container.querySelector('[data-embla-container]');
-          if (!carouselContainer) return;
-          const currentScrollX = carouselContainer.getBoundingClientRect().x;
-          if (currentScrollX < lastScrollX.current) {
-              setHeaderVisible(false);
-          } else {
-              setHeaderVisible(true);
-          }
-          lastScrollX.current = currentScrollX;
-      }
-    };
-
-    const container = galleryRef.current;
-    if (scrollDirection === 'vertical') {
-        container?.addEventListener('scroll', handleScroll);
-    }
-    if (carouselApi && scrollDirection === 'horizontal') {
-        carouselApi.on('scroll', handleScroll);
-    }
-    
-    return () => {
-        container?.removeEventListener('scroll', handleScroll);
-        carouselApi?.off('scroll', handleScroll);
-    }
-  }, [scrollDirection, carouselApi, isClient]);
+  }, [items, scrollDirection, isClient]);
 
 
   const handleSetScrollDirection = (dir: ScrollDirection) => {
@@ -193,43 +136,28 @@ export default function ImageGallery({ items }: { items: GalleryItem[] | null })
     }
   }, []);
 
-  if (!isClient || isLoading) {
+  if (!isClient) {
     return <Loading />;
   }
 
   return (
     <main className="bg-background text-primary h-screen w-screen overflow-hidden flex flex-col">
-      <header 
-        className={cn(
-            "absolute top-0 left-0 w-full p-4 z-50 transition-all duration-300",
-            headerVisible ? "translate-y-0 bg-gradient-to-b from-background/80 to-transparent" : "-translate-y-full"
-        )}
-      >
-        <div className="container mx-auto flex justify-between items-center">
-          <h1 className="text-2xl font-bold text-primary tracking-widest">ALLPI</h1>
+       <div className="absolute top-16 left-0 w-full z-40 flex justify-center items-center p-4">
+        <div className="flex items-center gap-4">
+          {title && <h1 className="text-2xl font-bold text-primary tracking-widest">{title}</h1>}
           <ScrollToggle
             scrollDirection={scrollDirection}
             setScrollDirection={handleSetScrollDirection}
           />
         </div>
-        <div className="absolute bottom-0 left-0 w-full h-1 overflow-hidden">
-          <div
-            className={cn(
-              "w-full h-full bg-accent/20",
-              !isLoading && "hidden"
-            )}
-          >
-            <div className="h-full bg-accent animate-youtube-loader"></div>
-          </div>
-        </div>
-      </header>
+      </div>
 
       {scrollDirection === "vertical" ? (
         <div
           ref={galleryRef}
-          className="flex-1 w-full h-full pt-24 pb-8 scroll-smooth flex flex-col items-center gap-16 overflow-y-auto px-4"
+          className="flex-1 w-full h-full pt-32 pb-8 scroll-smooth flex flex-col items-center gap-16 overflow-y-auto px-4"
         >
-          {items.map((item, index) => {
+          {items?.map((item, index) => {
             if (item.type === "folder") {
               return (
                 <div key={item.id} className="w-full max-w-5xl flex-shrink-0">
@@ -258,7 +186,7 @@ export default function ImageGallery({ items }: { items: GalleryItem[] | null })
           <div className="h-16 w-full flex-shrink-0" />
         </div>
       ) : (
-        <div ref={galleryRef} className="w-full h-full pt-24 pb-12">
+        <div ref={galleryRef} className="w-full h-full pt-32 pb-12">
           <Carousel setApi={setCarouselApi} className="w-full h-full max-w-6xl mx-auto">
             <CarouselContent className="h-full">
               {imagesOnly?.map((item, index) => (

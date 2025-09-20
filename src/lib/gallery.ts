@@ -1,4 +1,3 @@
-
 'use server';
 import {z} from 'zod';
 
@@ -31,12 +30,15 @@ export type Folder = {
   name: string;
   path: string;
   images: Omit<ImageFile, 'type'>[];
-  layout: 'horizontal' | 'vertical';
 };
 
-export type GalleryItem =
-  | (ImageFile & {layout: 'vertical' | 'horizontal'})
-  | Folder;
+export type GalleryItem = ImageFile | Folder;
+
+type GetGalleryItemsOptions = 
+  | { type: 'all' }
+  | { type: 'images' }
+  | { type: 'folders' }
+  | { type: 'folder'; path: string };
 
 
 // ---------- Helpers ----------
@@ -48,7 +50,7 @@ async function getRepoTree(): Promise<z.infer<typeof GithubTreeFileSchema>[]> {
         Accept: 'application/vnd.github.v3+json',
         'X-GitHub-Api-Version': '2022-11-28',
       },
-      cache: 'no-store', // Disable caching for this request
+      cache: 'no-store',
     });
     if (!response.ok) {
       console.error(
@@ -77,14 +79,9 @@ function getBaseImageUrl(path: string) {
   return `https://raw.githubusercontent.com/${REPO_OWNER}/${REPO_NAME}/${REPO_BRANCH}/${path}`;
 }
 
-// ---------- Main ----------
-export async function getGalleryItems(): Promise<GalleryItem[] | null> {
-   try {
+async function processRepoTree(): Promise<{ rootImages: ImageFile[], folders: Folder[] }> {
     const repoTree = await getRepoTree();
-    if (repoTree.length === 0) {
-      return [];
-    }
-
+    
     const imageFiles = repoTree.filter(
       file =>
         file.type === 'blob' &&
@@ -92,7 +89,7 @@ export async function getGalleryItems(): Promise<GalleryItem[] | null> {
         isImageFile(file.path)
     );
 
-    const folders: {[key: string]: Omit<Folder, 'layout' | 'images'> & {images: ImageFile[]}} = {};
+    const folderData: {[key: string]: Omit<Folder, 'images'> & {images: ImageFile[]}} = {};
     const rootImages: ImageFile[] = [];
 
     for (const file of imageFiles) {
@@ -113,38 +110,56 @@ export async function getGalleryItems(): Promise<GalleryItem[] | null> {
       if (isRootImage) {
         rootImages.push(image);
       } else {
-        const folderPath = pathParts.slice(1, -1).join('/');
-        if (!folders[folderPath]) {
-          folders[folderPath] = {
-            id: `${REPO_NAME}-folder-${folderPath}`,
+        const folderName = pathParts[1];
+        const folderPath = `pics/${folderName}`;
+        if (!folderData[folderPath]) {
+          folderData[folderPath] = {
+            id: `${REPO_NAME}-folder-${folderName}`,
             type: 'folder',
-            name: folderPath.split('/').pop()!,
-            path: `pics/${folderPath}`,
+            name: folderName,
+            path: folderPath,
             images: [],
           };
         }
-        folders[folderPath].images.push(image);
+        folderData[folderPath].images.push(image);
       }
     }
-
-    const folderItems: Folder[] = Object.values(folders).map(f => ({
+    
+    const folders: Folder[] = Object.values(folderData).map(f => ({
       ...f,
-      layout: 'horizontal',
       images: f.images.sort((a,b) => a.name.localeCompare(b.name))
-    }));
+    })).sort((a,b) => a.name.localeCompare(b.name));
     
-    const allItems: GalleryItem[] = [
-      ...rootImages.map(item => ({ ...item, layout: 'vertical' as 'vertical' | 'horizontal' })),
-      ...folderItems,
-    ];
+    rootImages.sort((a,b) => a.name.localeCompare(b.name));
 
-    if (allItems.length === 0) {
-      return [];
+    return { rootImages, folders };
+}
+
+
+// ---------- Main ----------
+export async function getGalleryItems(options: GetGalleryItemsOptions = { type: 'all' }): Promise<GalleryItem[] | null> {
+   try {
+    const { rootImages, folders } = await processRepoTree();
+
+    switch (options.type) {
+        case 'images':
+            return rootImages;
+        case 'folders':
+            return folders;
+        case 'folder':
+            const foundFolder = folders.find(f => f.path === options.path);
+            return foundFolder ? foundFolder.images : [];
+        case 'all':
+        default:
+            const allItems: GalleryItem[] = [...rootImages, ...folders];
+            allItems.sort((a, b) => {
+              if (a.type === b.type) {
+                return a.name.localeCompare(b.name);
+              }
+              return a.type === 'image' ? -1 : 1;
+            });
+            return allItems;
     }
-    
-    allItems.sort((a, b) => a.path.localeCompare(b.path));
-
-    return allItems;
   } catch (error) {
     console.error('Error in getGalleryItems:', error);
     return null;
