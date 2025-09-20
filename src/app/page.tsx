@@ -1,3 +1,4 @@
+
 import ImageGallery from '@/components/image-gallery';
 import { getGalleryItems } from '@/lib/gallery';
 import { Suspense } from 'react';

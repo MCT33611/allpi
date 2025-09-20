@@ -67,6 +67,8 @@ export default function ImageGallery({ items, title }: ImageGalleryProps) {
     const galleryElement = galleryRef.current;
     if (scrollDirection === 'vertical') {
       galleryElement?.addEventListener('scroll', handleScroll);
+    } else {
+      setIsHeaderVisible(true); // Always show header in horizontal mode
     }
     return () => {
       galleryElement?.removeEventListener('scroll', handleScroll);
