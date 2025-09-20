@@ -102,7 +102,7 @@ export default function FolderLane({
             isDragging ? 'cursor-grabbing' : 'cursor-grab'
         )}
       >
-        <div className="flex">
+        <div className="flex w-max">
           {folder.images.map((image) => (
             <div
               key={image.id}

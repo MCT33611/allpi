@@ -260,13 +260,13 @@ export default function ImageGallery({ items }: { items: GalleryItem[] | null })
       ) : (
         <div ref={galleryRef} className="w-full h-full pt-24 pb-12">
           <Carousel setApi={setCarouselApi} className="w-full h-full max-w-6xl mx-auto">
-            <CarouselContent className="h-full p-4">
+            <CarouselContent className="h-full">
               {imagesOnly?.map((item, index) => (
                 <CarouselItem
                   key={item.id}
                   className="h-full w-full flex items-center justify-center"
                 >
-                  <div className="relative w-full h-[80vh]">
+                  <div className="relative w-full h-[80vh] px-4 md:px-0">
                     <ImageCard
                       image={item}
                       className="w-full h-full"
