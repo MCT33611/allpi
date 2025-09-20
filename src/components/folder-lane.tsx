@@ -54,23 +54,20 @@ export default function FolderLane({
       <h2 className="text-xl font-semibold text-accent pl-4 md:pl-0">
         {folder.name}
       </h2>
-      <div className="flex overflow-x-auto snap-x snap-mandatory hide-scrollbar">
-        {folder.images.map((image) => (
-          <div
-            key={image.id}
-            ref={(node) => setRef(image.id, node)}
-            data-id={image.id}
-            className="w-full h-auto aspect-[4/3] flex-shrink-0 snap-start"
-          >
-            <ImageCard image={image} fit="contain"/>
-          </div>
-        ))}
+      <div className="w-full overflow-x-auto snap-x snap-mandatory hide-scrollbar">
+        <div className="flex w-max">
+          {folder.images.map((image) => (
+            <div
+              key={image.id}
+              ref={(node) => setRef(image.id, node)}
+              data-id={image.id}
+              className="w-screen md:w-[calc(1024px-2rem)] h-auto aspect-[4/3] flex-shrink-0 snap-start px-2"
+            >
+              <ImageCard image={image} fit="contain" />
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );
 }
-
-// Helper to hide scrollbars, you might need a CSS utility for this
-// e.g., in your globals.css:
-// .hide-scrollbar::-webkit-scrollbar { display: none; }
-// .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
