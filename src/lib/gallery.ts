@@ -48,7 +48,7 @@ async function getRepoTree(): Promise<z.infer<typeof GithubTreeFileSchema>[]> {
         Accept: 'application/vnd.github.v3+json',
         'X-GitHub-Api-Version': '2022-11-28',
       },
-      next: {revalidate: 3600}, // Cache for 1 hour
+      cache: 'no-store', // Disable caching for this request
     });
     if (!response.ok) {
       console.error(
@@ -127,31 +127,24 @@ export async function getGalleryItems(): Promise<GalleryItem[] | null> {
       }
     }
 
-    const folderItems: Omit<Folder, 'layout'>[] = Object.values(folders);
+    const folderItems: Folder[] = Object.values(folders).map(f => ({
+      ...f,
+      layout: 'horizontal',
+      images: f.images.sort((a,b) => a.name.localeCompare(b.name))
+    }));
     
-    const allItems: (ImageFile | Omit<Folder, 'layout'>)[] = [
-      ...rootImages,
+    const allItems: GalleryItem[] = [
+      ...rootImages.map(item => ({ ...item, layout: 'vertical' as 'vertical' | 'horizontal' })),
       ...folderItems,
     ];
 
     if (allItems.length === 0) {
       return [];
     }
-
-    const galleryItems: GalleryItem[] = allItems.map(item => {
-      if (item.type === 'folder') {
-        return {
-          ...item,
-          layout: 'horizontal', // Folders are always horizontal
-          images: item.images.sort((a,b) => a.name.localeCompare(b.name))
-        } as Folder
-      }
-      return { ...item, layout: 'vertical' } as ImageFile & { layout: 'vertical' | 'horizontal' }; // Root images are vertical
-    });
     
-    galleryItems.sort((a, b) => a.path.localeCompare(b.path));
+    allItems.sort((a, b) => a.path.localeCompare(b.path));
 
-    return galleryItems;
+    return allItems;
   } catch (error) {
     console.error('Error in getGalleryItems:', error);
     return null;

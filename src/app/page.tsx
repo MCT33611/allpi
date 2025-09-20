@@ -3,7 +3,7 @@ import { getGalleryItems } from '@/lib/gallery';
 import { Suspense } from 'react';
 import Loading from './loading';
 
-export const revalidate = 3600;
+export const revalidate = 0;
 
 export default async function Home() {
   const galleryItems = await getGalleryItems();
