@@ -32,11 +32,16 @@ export default function ImageGallery({ items }: { items: GalleryItem[] | null })
   const itemRefs = useRef(new Map<string, HTMLElement>());
   const carouselItemRefs = useRef(new Map<string, number>());
   
-  items?.forEach((item, index) => {
+  const imagesOnly = items?.filter(item => item.type === 'image');
+  imagesOnly?.forEach((item, index) => {
     carouselItemRefs.current.set(item.id, index);
+  });
+
+  items?.forEach((item, index) => {
     if(item.type === 'folder') {
+      carouselItemRefs.current.set(item.id, index); // for vertical
       item.images.forEach(img => {
-        carouselItemRefs.current.set(img.id, index);
+        carouselItemRefs.current.set(img.id, index); // for vertical
       })
     }
   });
@@ -51,39 +56,38 @@ export default function ImageGallery({ items }: { items: GalleryItem[] | null })
     const startImageId = searchParams.get("imageId") || localStorage.getItem("lastSeenImageId");
 
     if (startImageId) {
-        const index = carouselItemRefs.current.get(startImageId);
-        if (typeof index === 'number') {
-            if (scrollDirection === 'horizontal' && carouselApi) {
+        if (scrollDirection === 'horizontal' && carouselApi) {
+            const index = carouselItemRefs.current.get(startImageId);
+            if (typeof index === 'number') {
                 setTimeout(() => carouselApi.scrollTo(index, true), 100);
-            } else {
-                 let attempts = 0;
-                const maxAttempts = 100;
-                const tryScroll = () => {
-                    const element = itemRefs.current.get(startImageId);
-                    if (element) {
-                        element.scrollIntoView({ behavior: "auto", block: "center" });
-                    } else if (attempts < maxAttempts) {
-                        attempts++;
-                        setTimeout(tryScroll, 50);
-                    }
-                };
-                setTimeout(tryScroll, 100);
             }
+        } else {
+             let attempts = 0;
+            const maxAttempts = 100;
+            const tryScroll = () => {
+                const element = itemRefs.current.get(startImageId);
+                if (element) {
+                    element.scrollIntoView({ behavior: "auto", block: "center" });
+                } else if (attempts < maxAttempts) {
+                    attempts++;
+                    setTimeout(tryScroll, 50);
+                }
+            };
+            setTimeout(tryScroll, 100);
         }
     }
   }, [searchParams, items, carouselApi, scrollDirection, isClient]);
 
 
   useEffect(() => {
-    if (!carouselApi || !isClient || !items) return;
+    if (!carouselApi || !isClient || !imagesOnly) return;
 
     const onSelect = (api: CarouselApi) => {
       const slideIndex = api.selectedScrollSnap();
-      const currentItem = items[slideIndex];
+      const currentItem = imagesOnly[slideIndex];
       if (currentItem) {
-        const imageId = currentItem.type === 'folder' ? (currentItem.images[0]?.id || currentItem.id) : currentItem.id;
-        localStorage.setItem("lastSeenImageId", imageId);
-        const newUrl = `${window.location.pathname}?imageId=${imageId}`;
+        localStorage.setItem("lastSeenImageId", currentItem.id);
+        const newUrl = `${window.location.pathname}?imageId=${currentItem.id}`;
         window.history.replaceState({ ...window.history.state, as: newUrl, url: newUrl }, "", newUrl);
       }
     };
@@ -92,7 +96,7 @@ export default function ImageGallery({ items }: { items: GalleryItem[] | null })
     return () => {
       carouselApi.off("select", onSelect);
     };
-  }, [carouselApi, items, isClient]);
+  }, [carouselApi, imagesOnly, isClient]);
 
 
   useEffect(() => {
@@ -238,13 +242,9 @@ export default function ImageGallery({ items }: { items: GalleryItem[] | null })
         <div ref={galleryRef} className="flex-1 w-full h-full pt-20 flex items-center justify-center">
             <Carousel setApi={setCarouselApi} className="w-full h-full max-w-6xl">
                 <CarouselContent className="h-full p-4" data-embla-container>
-                {items.map((item, index) => (
+                {imagesOnly?.map((item, index) => (
                     <CarouselItem key={item.id} className="h-full w-full relative">
-                       {item.type === 'image' ? (
-                          <ImageCard image={item} className="w-full h-full" priority={index < 3} fit="contain" />
-                       ) : (
-                          <FolderLane folder={item} setRef={setItemRef} scrollDirection="horizontal" />
-                       )}
+                       <ImageCard image={item} className="w-full h-full" priority={index < 3} fit="contain" />
                     </CarouselItem>
                 ))}
                 </CarouselContent>
