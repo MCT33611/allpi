@@ -25,7 +25,7 @@ export default function ImageCard({
   return (
     <div
       className={cn(
-        "relative w-full h-full overflow-hidden rounded-lg border-2 border-accent/20 hover:border-accent transition-all duration-300 shadow-lg group",
+        "relative w-full h-full overflow-hidden rounded-lg border-2 border-accent/20 transition-all duration-300 shadow-lg group",
         className
       )}
     >
