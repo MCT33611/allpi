@@ -1,5 +1,8 @@
 'use server';
 import {z} from 'zod';
+import dotenv from 'dotenv';
+
+dotenv.config();
 
 const REPO_OWNER = 'MCT33611';
 const REPO_NAME = 'allpi';
@@ -49,8 +52,9 @@ async function getRepoTree(): Promise<z.infer<typeof GithubTreeFileSchema>[]> {
     'X-GitHub-Api-Version': '2022-11-28',
   };
 
-  if (process.env.GITHUB_TOKEN) {
-    headers['Authorization'] = `Bearer ${process.env.GITHUB_TOKEN}`;
+  const token = process.env.GITHUB_TOKEN;
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
   } else {
     console.warn("GITHUB_TOKEN environment variable not set. API requests to GitHub may be rate-limited.");
   }
