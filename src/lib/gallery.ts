@@ -1,10 +1,8 @@
 
 'use server';
 import {z} from 'zod';
-import {
-  determineGalleryLayout,
-  type DetermineGalleryLayoutInput,
-} from '@/ai/flows/determine-gallery-layout';
+import {determineGalleryLayout} from '@/ai/flows/determine-gallery-layout';
+import type {DetermineGalleryLayoutInput} from '@/ai/flows/gallery-layout-types';
 
 const REPO_OWNER = 'MCT33611';
 const REPO_NAME = 'allpi';
@@ -149,9 +147,9 @@ export async function getGalleryItems(): Promise<GalleryItem[] | null> {
       })),
     };
     
-    const { itemsWithLayout: layoutResult } = await determineGalleryLayout(layoutInput);
+    const { itemsWithLayout } = await determineGalleryLayout(layoutInput);
 
-    const layoutMap = new Map(layoutResult.map(item => [item.id, item.layout]));
+    const layoutMap = new Map(itemsWithLayout.map(item => [item.id, item.layout]));
 
     const galleryItems: GalleryItem[] = allItems.map(item => {
       const layout = layoutMap.get(item.id) || (item.type === 'folder' ? 'horizontal' : 'vertical');

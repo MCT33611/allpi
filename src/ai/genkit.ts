@@ -1,6 +1,7 @@
 import {genkit} from 'genkit';
 import {googleAI} from '@genkit-ai/googleai';
-import {dev} from 'zod';
+
+const dev = process.env.NODE_ENV === 'development';
 
 export const ai = genkit({
   plugins: [
