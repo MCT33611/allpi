@@ -17,11 +17,14 @@ const navItems = [
   { href: "/gallery", label: "Gallery", icon: LayoutGrid },
 ];
 
-export default function Header() {
+export default function Header({ isVisible = true }: { isVisible?: boolean }) {
   const pathname = usePathname();
 
   return (
-    <header className="absolute top-0 left-0 w-full p-4 z-50 bg-gradient-to-b from-background/80 to-transparent">
+    <header className={cn(
+      "absolute top-0 left-0 w-full p-4 z-50 bg-gradient-to-b from-background/80 to-transparent transition-transform duration-300",
+      isVisible ? 'translate-y-0' : '-translate-y-full'
+    )}>
       <div className="container mx-auto flex justify-between items-center">
         <Link href="/" className="flex items-center gap-2">
             <Home className="w-8 h-8 text-primary" />

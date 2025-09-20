@@ -26,7 +26,12 @@ type ImageGalleryProps = {
 export default function ImageGallery({ items, title }: ImageGalleryProps) {
   const [isClient, setIsClient] = useState(false);
   const [scrollDirection, setScrollDirection] = useState<ScrollDirection>("vertical");
+  const [isLoading, setIsLoading] = useState(true);
+  const [isHeaderVisible, setIsHeaderVisible] = useState(true);
+
   const galleryRef = useRef<HTMLDivElement>(null);
+  const lastScrollY = useRef(0);
+
   const searchParams = useSearchParams();
 
   const [carouselApi, setCarouselApi] = useState<CarouselApi>();
@@ -43,6 +48,36 @@ export default function ImageGallery({ items, title }: ImageGalleryProps) {
   useEffect(() => {
     setIsClient(true);
   }, []);
+
+  const handleScroll = useCallback(() => {
+    if (!galleryRef.current) return;
+    const currentScrollY = galleryRef.current.scrollTop;
+
+    if (Math.abs(currentScrollY - lastScrollY.current) < 20) return;
+
+    if (currentScrollY > lastScrollY.current && currentScrollY > 100) {
+      setIsHeaderVisible(false); // Scrolling down
+    } else {
+      setIsHeaderVisible(true); // Scrolling up
+    }
+    lastScrollY.current = currentScrollY;
+  }, []);
+
+  useEffect(() => {
+    const galleryElement = galleryRef.current;
+    if (scrollDirection === 'vertical') {
+      galleryElement?.addEventListener('scroll', handleScroll);
+    }
+    return () => {
+      galleryElement?.removeEventListener('scroll', handleScroll);
+    };
+  }, [scrollDirection, handleScroll]);
+
+  useEffect(() => {
+    if (items) {
+      setIsLoading(false);
+    }
+  }, [items]);
 
   useEffect(() => {
     if (!isClient || !items?.length) return;
@@ -136,18 +171,19 @@ export default function ImageGallery({ items, title }: ImageGalleryProps) {
     }
   }, []);
 
-  if (!isClient) {
+  if (!isClient || isLoading) {
     return <Loading />;
   }
 
   return (
     <main className="bg-background text-primary h-screen w-screen overflow-hidden flex flex-col">
-       <div className="absolute top-16 left-0 w-full z-40 flex justify-center items-center p-4">
+       <div className={cn("absolute top-16 left-0 w-full z-40 flex justify-center items-center p-4 transition-transform duration-300", isHeaderVisible ? 'translate-y-0' : '-translate-y-32')}>
         <div className="flex items-center gap-4">
           {title && <h1 className="text-2xl font-bold text-primary tracking-widest">{title}</h1>}
           <ScrollToggle
             scrollDirection={scrollDirection}
             setScrollDirection={handleSetScrollDirection}
+            disableHorizontal={items?.some(item => item.type === 'folder')}
           />
         </div>
       </div>
@@ -188,13 +224,13 @@ export default function ImageGallery({ items, title }: ImageGalleryProps) {
       ) : (
         <div ref={galleryRef} className="w-full h-full pt-32 pb-12">
           <Carousel setApi={setCarouselApi} className="w-full h-full max-w-6xl mx-auto">
-            <CarouselContent className="h-full">
+            <CarouselContent className="h-full p-4">
               {imagesOnly?.map((item, index) => (
                 <CarouselItem
                   key={item.id}
                   className="h-full w-full flex items-center justify-center"
                 >
-                  <div className="relative w-full h-[80vh] px-4 md:px-0">
+                  <div className="relative w-full h-[80vh]">
                     <ImageCard
                       image={item}
                       className="w-full h-full"
