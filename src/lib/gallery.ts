@@ -2,7 +2,7 @@
 'use server';
 import {z} from 'zod';
 import {determineGalleryLayout} from '@/ai/flows/determine-gallery-layout';
-import type {DetermineGalleryLayoutInput} from '@/ai/flows/gallery-layout-types';
+import type {DetermineGalleryLayoutInput} from '@/ai/flows/determine-gallery-layout';
 
 const REPO_OWNER = 'MCT33611';
 const REPO_NAME = 'allpi';

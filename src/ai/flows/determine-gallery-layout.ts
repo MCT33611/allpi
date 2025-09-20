@@ -8,12 +8,41 @@
  */
 
 import {ai} from '@/ai/genkit';
-import {
-  DetermineGalleryLayoutInputSchema,
-  DetermineGalleryLayoutOutputSchema,
-  type DetermineGalleryLayoutInput,
-  type DetermineGalleryLayoutOutput,
-} from './gallery-layout-types';
+import {z} from 'zod';
+
+// Schemas and Types (defined in-file, not exported)
+const GalleryItemInputSchema = z.object({
+  id: z.string(),
+  type: z.enum(['image', 'folder']),
+  name: z.string(),
+  path: z.string(),
+});
+
+const DetermineGalleryLayoutInputSchema = z.object({
+  items: z
+    .array(GalleryItemInputSchema)
+    .describe('An array of gallery items to be processed.'),
+});
+export type DetermineGalleryLayoutInput = z.infer<
+  typeof DetermineGalleryLayoutInputSchema
+>;
+
+const GalleryItemLayoutSchema = z.object({
+  id: z.string().describe('The unique identifier for the item.'),
+  layout: z
+    .enum(['horizontal', 'vertical'])
+    .describe("The suggested layout strategy ('horizontal' or 'vertical')."),
+});
+
+const DetermineGalleryLayoutOutputSchema = z.object({
+  itemsWithLayout: z
+    .array(GalleryItemLayoutSchema)
+    .describe('An array of items with their determined layout.'),
+});
+export type DetermineGalleryLayoutOutput = z.infer<
+  typeof DetermineGalleryLayoutOutputSchema
+>;
+
 
 // Exported function that clients will call
 export async function determineGalleryLayout(
